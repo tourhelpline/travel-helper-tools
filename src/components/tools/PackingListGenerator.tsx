@@ -1,450 +1,317 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Download } from 'lucide-react';
+import { Loader2, Save, Printer, RefreshCw } from 'lucide-react';
 
-// Sample destination climate data
-const CLIMATES = [
-  "Tropical",
-  "Desert",
-  "Mediterranean",
-  "Humid Continental",
-  "Subarctic",
-  "Temperate",
-  "Oceanic",
-  "Alpine"
-];
-
-// Sample trip types
-const TRIP_TYPES = [
-  "Beach Vacation",
-  "City Break",
-  "Mountain/Hiking",
-  "Business Trip",
-  "Backpacking",
-  "Luxury Resort",
-  "Safari/Adventure",
-  "Ski Trip"
-];
-
-// Essential packing items
-const ESSENTIAL_ITEMS = [
-  "Passport/ID",
-  "Credit/Debit Cards",
-  "Travel Insurance Documents",
-  "Flight/Travel Tickets",
-  "Phone & Charger",
-  "Power Adapter",
-  "Medications"
-];
-
-// Define packing items by categories
-const PACKING_CATEGORIES = {
-  "Clothing": {
-    "Tropical": ["T-shirts", "Shorts", "Swimwear", "Light dresses", "Sandals", "Sun hat", "Light jacket"],
-    "Desert": ["Light, loose clothing", "Long-sleeved shirts", "Hat with neck cover", "Sunglasses", "Sturdy shoes"],
-    "Mediterranean": ["Light clothing", "Swimwear", "Evening wear", "Light jacket", "Walking shoes"],
-    "Humid Continental": ["Layered clothing", "Rain jacket", "Warmer jacket", "Comfortable shoes", "Umbrella"],
-    "Subarctic": ["Thermal underwear", "Heavy jackets", "Insulated boots", "Gloves", "Scarves", "Warm hats"],
-    "Temperate": ["Mix of light and warm clothing", "Rain jacket", "Sweaters", "Comfortable shoes"],
-    "Oceanic": ["Rain jacket", "Waterproof shoes", "Umbrella", "Layered clothing", "Light sweaters"],
-    "Alpine": ["Hiking boots", "Thermal layers", "Waterproof jacket", "Warm hat", "Gloves"]
+// Sample packing items categorized by climate
+const PACKING_ITEMS = {
+  Clothing: {
+    Tropical: [
+      "T-shirts", "Shorts", "Sandals", "Light dresses/skirts", "Swimwear", "Sun hat", "Light rain jacket"
+    ],
+    Desert: [
+      "Light long-sleeve shirts", "Lightweight pants", "Sun hat", "Bandana/scarf", "Sunglasses", "Closed shoes"
+    ],
+    Mediterranean: [
+      "T-shirts", "Shorts", "Light sweater", "Light jacket", "Comfortable walking shoes", "Swimwear"
+    ],
+    "Humid Continental": [
+      "Mix of short and long-sleeve shirts", "Pants", "Light jacket", "Comfortable walking shoes"
+    ],
+    Subarctic: [
+      "Thermal base layers", "Sweaters", "Heavy jacket", "Gloves", "Winter hat", "Scarf", "Insulated boots"
+    ],
+    Temperate: [
+      "Mix of T-shirts and long sleeves", "Jeans/pants", "Light jacket or sweater", "Comfortable shoes"
+    ],
+    Oceanic: [
+      "Layers (T-shirts, long sleeves)", "Light sweater", "Waterproof jacket", "Jeans/pants", "Walking shoes"
+    ],
+    Alpine: [
+      "Thermal base layers", "Sweaters", "Down jacket", "Hiking boots", "Gloves", "Hat"
+    ]
   },
-  "Toiletries": [
-    "Toothbrush & toothpaste",
-    "Shower gel/soap",
-    "Shampoo & conditioner",
-    "Deodorant",
-    "Sunscreen",
-    "Moisturizer",
-    "Razor & shaving cream",
-    "Hairbrush/comb",
-    "Makeup & remover",
-    "Contact lenses & solution"
+  Toiletries: [
+    "Toothbrush & toothpaste", "Deodorant", "Shampoo & conditioner", "Soap/body wash", "Razor", "Sunscreen", 
+    "Moisturizer", "Lip balm"
   ],
   "Health & Safety": [
-    "First aid kit",
-    "Hand sanitizer",
-    "Insect repellent",
-    "Pain relievers",
-    "Prescription medications",
-    "Vitamins",
-    "Face masks",
-    "Sunscreen",
-    "Lip balm with SPF"
+    "Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", 
+    "Travel insurance info"
   ],
-  "Technology": [
-    "Phone & charger",
-    "Laptop/tablet & charger",
-    "Camera & charger",
-    "Power bank",
-    "Headphones",
-    "E-reader",
-    "Universal adapter",
-    "USB cables"
+  Technology: [
+    "Phone & charger", "Camera", "Power adapter", "Portable power bank", "Headphones"
   ],
-  "Miscellaneous": [
-    "Sunglasses",
-    "Books/e-reader",
-    "Travel pillow",
-    "Eye mask",
-    "Earplugs",
-    "Reusable water bottle",
-    "Snacks",
-    "Laundry bag",
-    "Travel locks",
-    "Travel journal"
+  Miscellaneous: [
+    "Passport/ID", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillow",
+    "Water bottle", "Day bag/backpack", "Books/e-reader"
   ]
 };
 
-// Additional items by trip type
-const TRIP_SPECIFIC_ITEMS = {
-  "Beach Vacation": ["Beach towel", "Flip flops", "Extra swimwear", "Beach bag", "Snorkeling gear", "Beach games"],
-  "City Break": ["City map/guide", "Comfortable walking shoes", "Day bag/backpack", "Dressy outfit for evenings"],
-  "Mountain/Hiking": ["Hiking boots", "Hiking poles", "Backpack", "Water bottle", "Trail maps", "First aid kit"],
-  "Business Trip": ["Business attire", "Portfolio/notebook", "Business cards", "Presentation materials"],
-  "Backpacking": ["Backpack", "Quick-dry towel", "Sleeping bag", "Multi-tool", "Flashlight"],
-  "Luxury Resort": ["Formal wear", "Dress shoes", "Jewelry/accessories", "Spa outfit"],
-  "Safari/Adventure": ["Binoculars", "Long-sleeved shirts", "Sturdy boots", "Insect repellent", "Hat with neck protection"],
-  "Ski Trip": ["Ski jacket", "Ski pants", "Thermal base layers", "Ski gloves", "Goggles", "Wool socks"]
+// Determining approximate climate by region
+const getDefaultClimate = (destination: string): string => {
+  const destination_lower = destination.toLowerCase();
+  
+  if (/\b(thailand|bali|singapore|malaysia|philippines|indonesia|hawaii|jamaica|caribbean)\b/.test(destination_lower)) {
+    return "Tropical";
+  } else if (/\b(egypt|dubai|sahara|arizona|nevada|qatar|saudi|uae)\b/.test(destination_lower)) {
+    return "Desert";
+  } else if (/\b(italy|greece|spain|france|portugal|croatia|turkey)\b/.test(destination_lower)) {
+    return "Mediterranean";
+  } else if (/\b(new york|chicago|toronto|boston|detroit|beijing|seoul)\b/.test(destination_lower)) {
+    return "Humid Continental";
+  } else if (/\b(alaska|siberia|greenland|iceland|finland|norway|sweden)\b/.test(destination_lower)) {
+    return "Subarctic";
+  } else if (/\b(london|paris|amsterdam|berlin|brussels|uk|england|ireland)\b/.test(destination_lower)) {
+    return "Oceanic";
+  } else if (/\b(alps|swiss|dolomites|andes|colorado|himalayas|rockies)\b/.test(destination_lower)) {
+    return "Alpine";
+  } else {
+    return "Temperate"; // Default
+  }
 };
 
 export const PackingListGenerator = () => {
   const [destination, setDestination] = useState<string>("");
-  const [climate, setClimate] = useState<string>("");
-  const [tripType, setTripType] = useState<string>("");
   const [duration, setDuration] = useState<number>(7);
-  const [packingList, setPackingList] = useState<string[]>([]);
-  const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
+  const [climate, setClimate] = useState<string>("Temperate");
+  const [packingList, setPackingList] = useState<{category: string, items: {name: string, packed: boolean}[]}[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [listGenerated, setListGenerated] = useState<boolean>(false);
-
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  
+  // Generate the packing list based on inputs
   const generatePackingList = () => {
-    if (!climate || !tripType || !duration) return;
+    if (!destination || duration <= 0) return;
     
-    setIsLoading(true);
+    setIsGenerating(true);
     
-    // Simulate API call delay
     setTimeout(() => {
-      // Start with essential items
-      let items = [...ESSENTIAL_ITEMS];
+      const detectedClimate = getDefaultClimate(destination);
+      if (climate !== detectedClimate) setClimate(detectedClimate);
       
-      // Add climate-specific clothing
-      if (PACKING_CATEGORIES.Clothing[climate as keyof typeof PACKING_CATEGORIES.Clothing]) {
-        items = [...items, ...PACKING_CATEGORIES.Clothing[climate as keyof typeof PACKING_CATEGORIES.Clothing]];
-      }
+      const list: {category: string, items: {name: string, packed: boolean}[]}[] = [];
       
-      // Add toiletries
-      items = [...items, ...PACKING_CATEGORIES.Toiletries];
-      
-      // Add health & safety items
-      items = [...items, ...PACKING_CATEGORIES.Health & Safety];
-      
-      // Add technology items
-      items = [...items, ...PACKING_CATEGORIES.Technology];
-      
-      // Add trip-specific items
-      if (TRIP_SPECIFIC_ITEMS[tripType as keyof typeof TRIP_SPECIFIC_ITEMS]) {
-        items = [...items, ...TRIP_SPECIFIC_ITEMS[tripType as keyof typeof TRIP_SPECIFIC_ITEMS]];
-      }
-      
-      // Add miscellaneous items
-      items = [...items, ...PACKING_CATEGORIES.Miscellaneous];
-      
-      // Filter out duplicates
-      const uniqueItems = Array.from(new Set(items));
-      
-      // Sort alphabetically
-      const sortedItems = uniqueItems.sort();
-      
-      setPackingList(sortedItems);
-      
-      // Initialize all items as unchecked
-      const initialCheckedState: { [key: string]: boolean } = {};
-      sortedItems.forEach(item => {
-        initialCheckedState[item] = false;
+      // Add clothing based on climate
+      const clothingItems = PACKING_ITEMS.Clothing[climate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
+      list.push({
+        category: "Clothing",
+        items: clothingItems.map(item => ({ name: item, packed: false }))
       });
-      setCheckedItems(initialCheckedState);
       
-      setIsLoading(false);
-      setListGenerated(true);
-    }, 1500);
-  };
-
-  const handleCheckItem = (item: string) => {
-    setCheckedItems(prev => ({
-      ...prev,
-      [item]: !prev[item]
-    }));
-  };
-
-  const downloadPackingList = () => {
-    const title = `Packing List for ${destination || "Your Trip"}\n`;
-    const details = `Destination: ${destination}\nClimate: ${climate}\nTrip Type: ${tripType}\nDuration: ${duration} days\n\n`;
-    
-    const categories: { [key: string]: string[] } = {
-      "Essentials": [],
-      "Clothing": [],
-      "Toiletries": [],
-      "Health & Safety": [],
-      "Technology": [],
-      "Trip Specific": [],
-      "Miscellaneous": []
-    };
-    
-    // Categorize items for the text file
-    packingList.forEach(item => {
-      if (ESSENTIAL_ITEMS.includes(item)) {
-        categories["Essentials"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else if (climate && PACKING_CATEGORIES.Clothing[climate as keyof typeof PACKING_CATEGORIES.Clothing]?.includes(item)) {
-        categories["Clothing"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else if (PACKING_CATEGORIES.Toiletries.includes(item)) {
-        categories["Toiletries"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else if (PACKING_CATEGORIES["Health & Safety"].includes(item)) {
-        categories["Health & Safety"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else if (PACKING_CATEGORIES.Technology.includes(item)) {
-        categories["Technology"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else if (tripType && TRIP_SPECIFIC_ITEMS[tripType as keyof typeof TRIP_SPECIFIC_ITEMS]?.includes(item)) {
-        categories["Trip Specific"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
-      } else {
-        categories["Miscellaneous"].push(`${checkedItems[item] ? "✓" : "☐"} ${item}`);
+      // Calculate clothing quantities based on trip duration
+      if (duration > 7) {
+        list[0].items.push({ name: "Extra clothing for longer trip", packed: false });
       }
-    });
-    
-    // Build the text content
-    let content = title + details;
-    
-    for (const [category, items] of Object.entries(categories)) {
-      if (items.length > 0) {
-        content += `== ${category} ==\n`;
-        content += items.join('\n');
-        content += '\n\n';
+      
+      // Add other categories
+      ["Toiletries", "Health & Safety", "Technology", "Miscellaneous"].forEach(category => {
+        list.push({
+          category,
+          items: PACKING_ITEMS[category as keyof typeof PACKING_ITEMS].map(item => ({ name: item, packed: false }))
+        });
+      });
+      
+      // Add travel-specific items
+      if (/\b(beach|island|tropical|bali|hawaii|caribbean)\b/.test(destination.toLowerCase())) {
+        list.push({
+          category: "Beach Essentials",
+          items: [
+            { name: "Beach towel", packed: false },
+            { name: "Snorkeling gear", packed: false },
+            { name: "Beach bag", packed: false }
+          ]
+        });
       }
-    }
-    
-    // Create a download link
-    const element = document.createElement('a');
-    const file = new Blob([content], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `packing-list-${destination.replace(/\s+/g, '-').toLowerCase() || 'trip'}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+      
+      if (/\b(hiking|mountain|alps|andes|rockies|trail)\b/.test(destination.toLowerCase())) {
+        list.push({
+          category: "Hiking Gear",
+          items: [
+            { name: "Hiking boots", packed: false },
+            { name: "Trekking poles", packed: false },
+            { name: "Day pack", packed: false },
+            { name: "Water bottle", packed: false }
+          ]
+        });
+      }
+      
+      setPackingList(list);
+      setIsGenerating(false);
+    }, 1000);
   };
-
-  const getCategoryColor = (item: string) => {
-    if (ESSENTIAL_ITEMS.includes(item)) {
-      return "text-red-600 font-medium";
-    }
-    if (climate && PACKING_CATEGORIES.Clothing[climate as keyof typeof PACKING_CATEGORIES.Clothing]?.includes(item)) {
-      return "text-blue-600";
-    }
-    if (PACKING_CATEGORIES.Toiletries.includes(item)) {
-      return "text-purple-600";
-    }
-    if (PACKING_CATEGORIES["Health & Safety"].includes(item)) {
-      return "text-green-600";
-    }
-    if (PACKING_CATEGORIES.Technology.includes(item)) {
-      return "text-amber-600";
-    }
-    if (tripType && TRIP_SPECIFIC_ITEMS[tripType as keyof typeof TRIP_SPECIFIC_ITEMS]?.includes(item)) {
-      return "text-teal-600 font-medium";
-    }
-    return "text-gray-700";
+  
+  // Toggle packed status
+  const togglePacked = (categoryIndex: number, itemIndex: number) => {
+    const updatedList = [...packingList];
+    updatedList[categoryIndex].items[itemIndex].packed = !updatedList[categoryIndex].items[itemIndex].packed;
+    setPackingList(updatedList);
   };
-
+  
+  // Calculate packing progress
   const getProgressPercentage = () => {
-    if (packingList.length === 0) return 0;
-    const checkedCount = Object.values(checkedItems).filter(Boolean).length;
-    return Math.round((checkedCount / packingList.length) * 100);
+    const totalItems = packingList.reduce((sum, category) => sum + category.items.length, 0);
+    const packedItems = packingList.reduce((sum, category) => 
+      sum + category.items.filter(item => item.packed).length, 0);
+    
+    return totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
   };
+  
+  // Print packing list
+  const printPackingList = () => {
+    window.print();
+  };
+  
+  useEffect(() => {
+    if (destination.length > 3) {
+      const detectedClimate = getDefaultClimate(destination);
+      setClimate(detectedClimate);
+    }
+  }, [destination]);
 
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="px-0 pt-0">
         <CardTitle className="text-travel-dark text-2xl">Packing List Generator</CardTitle>
         <CardDescription>
-          Create a customized packing list based on your destination and trip details
+          Create a customized packing list for your trip
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-0">
-        {!listGenerated ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="destination" className="block text-sm font-medium mb-1">Destination</label>
-                <Input
-                  id="destination"
-                  placeholder="Enter your destination"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="climate" className="block text-sm font-medium mb-1">Climate</label>
-                <Select
-                  value={climate}
-                  onValueChange={setClimate}
-                >
-                  <SelectTrigger id="climate" className="w-full">
-                    <SelectValue placeholder="Select climate type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CLIMATES.map((climateType) => (
-                      <SelectItem key={climateType} value={climateType}>
-                        {climateType}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label htmlFor="tripType" className="block text-sm font-medium mb-1">Trip Type</label>
-                <Select
-                  value={tripType}
-                  onValueChange={setTripType}
-                >
-                  <SelectTrigger id="tripType" className="w-full">
-                    <SelectValue placeholder="Select trip type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRIP_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label htmlFor="duration" className="block text-sm font-medium mb-1">Trip Duration (days)</label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min={1}
-                  max={90}
-                  value={duration}
-                  onChange={(e) => setDuration(parseInt(e.target.value) || 7)}
-                  className="w-full"
-                />
-              </div>
-              
-              <Button 
-                onClick={generatePackingList} 
-                className="w-full bg-travel-blue hover:bg-travel-teal transition-colors"
-                disabled={isLoading || !climate || !tripType}
-              >
-                {isLoading ? "Generating..." : "Generate Packing List"}
-              </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="destination" className="block text-sm font-medium mb-1">Destination</label>
+              <Input
+                id="destination"
+                placeholder="Enter destination (e.g., Paris, Thailand)"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                className="w-full"
+              />
             </div>
             
-            <div className="bg-travel-light rounded-lg p-6 flex items-center justify-center">
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-800 mb-3">How to use the Packing List Generator</h3>
-                <ol className="text-left space-y-2 text-gray-600">
-                  <li>1. Enter your destination (optional)</li>
-                  <li>2. Select the climate of your destination</li>
-                  <li>3. Choose your trip type</li>
-                  <li>4. Set the duration of your trip</li>
-                  <li>5. Click "Generate Packing List" to get your customized list</li>
-                </ol>
-                <div className="mt-6 p-4 bg-white rounded-md border border-gray-200">
-                  <p className="text-sm text-gray-500">
-                    After generating your list, you can check off items as you pack them and download the list for printing or offline reference.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <label htmlFor="duration" className="block text-sm font-medium mb-1">Trip Duration (days)</label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                value={duration}
+                onChange={(e) => setDuration(parseInt(e.target.value) || 7)}
+                className="w-full"
+              />
             </div>
+            
+            <div>
+              <label htmlFor="climate" className="block text-sm font-medium mb-1">Climate</label>
+              <Select
+                value={climate}
+                onValueChange={setClimate}
+              >
+                <SelectTrigger id="climate" className="w-full">
+                  <SelectValue placeholder="Select climate" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tropical">Tropical (hot & humid)</SelectItem>
+                  <SelectItem value="Desert">Desert (hot & dry)</SelectItem>
+                  <SelectItem value="Mediterranean">Mediterranean (warm, mild)</SelectItem>
+                  <SelectItem value="Humid Continental">Humid Continental (4 seasons)</SelectItem>
+                  <SelectItem value="Subarctic">Subarctic (very cold)</SelectItem>
+                  <SelectItem value="Temperate">Temperate (mild)</SelectItem>
+                  <SelectItem value="Oceanic">Oceanic (mild, rainy)</SelectItem>
+                  <SelectItem value="Alpine">Alpine (mountain climate)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button 
+              onClick={generatePackingList} 
+              className="w-full bg-travel-blue hover:bg-travel-teal transition-colors"
+              disabled={isGenerating || !destination || duration <= 0}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Generate Packing List
+                </>
+              )}
+            </Button>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-medium text-travel-dark">
-                  Packing List for {destination || "Your Trip"}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {climate} climate • {tripType} • {duration} days
+          
+          <div className="bg-travel-light rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+            {packingList.length > 0 ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium text-lg">Your Packing List</h3>
+                    <p className="text-sm text-gray-500">
+                      {destination} ({climate} climate) · {duration} days
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={printPackingList} size="sm">
+                      <Printer className="h-4 w-4 mr-1" />
+                      Print
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Save className="h-4 w-4 mr-1" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-travel-blue h-2.5 rounded-full transition-all duration-500" 
+                    style={{ width: `${getProgressPercentage()}%` }}
+                  ></div>
+                </div>
+                <p className="text-center text-sm text-gray-500">{getProgressPercentage()}% packed</p>
+                
+                {packingList.map((category, catIndex) => (
+                  <div key={`cat-${catIndex}`} className="border border-gray-200 rounded-md p-4 bg-white">
+                    <h4 className="font-medium text-travel-dark mb-2">{category.category}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {category.items.map((item, itemIndex) => (
+                        <div 
+                          key={`item-${catIndex}-${itemIndex}`} 
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox 
+                            checked={item.packed} 
+                            onCheckedChange={() => togglePacked(catIndex, itemIndex)}
+                            id={`item-${catIndex}-${itemIndex}`}
+                          />
+                          <label
+                            htmlFor={`item-${catIndex}-${itemIndex}`}
+                            className={`text-sm ${item.packed ? 'line-through text-gray-400' : ''}`}
+                          >
+                            {item.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-gray-500">
+                  Enter your trip details and click "Generate Packing List" to create a customized packing list.
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={() => setListGenerated(false)} variant="outline">
-                  Edit Details
-                </Button>
-                <Button 
-                  onClick={downloadPackingList} 
-                  className="bg-travel-blue hover:bg-travel-teal transition-colors"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download List
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-gray-100 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Packing Progress</span>
-                <span className="text-sm font-medium">{getProgressPercentage()}%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full">
-                <div 
-                  className="h-2 bg-travel-teal rounded-full" 
-                  style={{ width: `${getProgressPercentage()}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                <h4 className="font-medium">Items to Pack ({packingList.length})</h4>
-                <div className="text-xs space-x-4">
-                  <span className="text-red-600">● Essential</span>
-                  <span className="text-teal-600">● Trip Specific</span>
-                </div>
-              </div>
-              <div className="p-4 max-h-[400px] overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {packingList.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 py-1">
-                      <Checkbox 
-                        id={`item-${index}`}
-                        checked={checkedItems[item] || false}
-                        onCheckedChange={() => handleCheckItem(item)}
-                      />
-                      <Label 
-                        htmlFor={`item-${index}`}
-                        className={`${getCategoryColor(item)} ${checkedItems[item] ? 'line-through opacity-60' : ''}`}
-                      >
-                        {item}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-md text-sm">
-              <h4 className="font-medium text-travel-blue mb-1">Packing Tips</h4>
-              <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                <li>Roll clothes instead of folding to save space and reduce wrinkles</li>
-                <li>Pack heavier items at the bottom of your suitcase</li>
-                <li>Use packing cubes to organize and compress your belongings</li>
-                <li>Place toiletries in a ziplock bag to prevent leaks</li>
-                <li>Keep essential documents and medications in your carry-on</li>
-              </ul>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

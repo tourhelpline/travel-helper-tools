@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2, PlaneTakeoff } from 'lucide-react';
+import { getFlightPriceSuggestions, getOpenAIKey, simulateFlightPrice } from '@/lib/api';
+import { OpenAIKeyInput } from '@/components/OpenAIKeyInput';
+import { useToast } from '@/components/ui/use-toast';
 
 // Sample airports data
 const AIRPORTS = [
@@ -24,66 +27,75 @@ const AIRPORTS = [
   { code: "SYD", name: "Kingsford Smith", city: "Sydney", country: "Australia" }
 ];
 
-// Sample price calculation function (in a real app, we would call an API)
-const calculateFlightPrice = (from: string, to: string, date: Date) => {
-  // Generate a consistent but seemingly random price based on inputs
-  const fromIndex = AIRPORTS.findIndex(a => a.code === from);
-  const toIndex = AIRPORTS.findIndex(a => a.code === to);
-  const dateValue = date.getTime();
-  
-  // Base price calculation
-  let basePrice = 200 + (Math.abs(fromIndex - toIndex) * 50);
-  
-  // Adjust for date (prices increase as date approaches)
-  const today = new Date();
-  const daysUntilFlight = Math.max(1, Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-  
-  if (daysUntilFlight < 7) {
-    basePrice *= 1.5; // Last minute booking premium
-  } else if (daysUntilFlight < 14) {
-    basePrice *= 1.3;
-  } else if (daysUntilFlight < 30) {
-    basePrice *= 1.1;
-  }
-  
-  // Add some variability
-  const variabilityFactor = 0.8 + (0.4 * Math.sin(dateValue / 86400000));
-  basePrice *= variabilityFactor;
-  
-  // Round to nearest 10
-  basePrice = Math.round(basePrice / 10) * 10;
-  
-  // Create a price range
-  const lowPrice = Math.round(basePrice * 0.85);
-  const highPrice = Math.round(basePrice * 1.15);
-  
-  return {
-    lowPrice,
-    highPrice,
-    averagePrice: basePrice,
-    bestDayToBook: daysUntilFlight > 21 ? "now" : "as soon as possible",
-    priceClass: daysUntilFlight < 7 ? "high" : daysUntilFlight < 14 ? "medium" : "low"
-  };
-};
-
 export const FlightPriceTracker = () => {
   const [fromAirport, setFromAirport] = useState<string>("");
   const [toAirport, setToAirport] = useState<string>("");
   const [departureDate, setDepartureDate] = useState<Date>();
   const [flightPrice, setFlightPrice] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(!!getOpenAIKey());
+  const { toast } = useToast();
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!fromAirport || !toAirport || !departureDate) return;
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const priceInfo = calculateFlightPrice(fromAirport, toAirport, departureDate);
+    try {
+      let priceInfo;
+      
+      // If API key is available, use OpenAI for more accurate suggestions
+      if (hasApiKey) {
+        const fromCity = AIRPORTS.find(a => a.code === fromAirport)?.city || fromAirport;
+        const toCity = AIRPORTS.find(a => a.code === toAirport)?.city || toAirport;
+        
+        const response = await getFlightPriceSuggestions(
+          fromCity, 
+          toCity, 
+          departureDate
+        );
+        
+        if (response.success && response.data) {
+          const aiResponse = response.data.choices[0].message.content;
+          try {
+            const parsedData = JSON.parse(aiResponse);
+            priceInfo = {
+              lowPrice: parsedData.priceRange.low,
+              highPrice: parsedData.priceRange.high,
+              averagePrice: parsedData.averagePrice,
+              bestDayToBook: parsedData.bestTimeToBook,
+              priceClass: parsedData.priceClass,
+              tip: parsedData.bestDealTip
+            };
+          } catch (error) {
+            // Fallback to simulation if parsing fails
+            priceInfo = simulateFlightPrice(fromAirport, toAirport, departureDate);
+          }
+        } else {
+          // API call failed, fallback to simulation
+          priceInfo = simulateFlightPrice(fromAirport, toAirport, departureDate);
+          toast({
+            title: "API Error",
+            description: "Could not get AI-powered prices. Using simulation instead.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        // No API key, use simulation
+        priceInfo = simulateFlightPrice(fromAirport, toAirport, departureDate);
+      }
+      
       setFlightPrice(priceInfo);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to get flight prices. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error fetching flight prices:", error);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getPriceClassColor = (priceClass: string) => {
@@ -98,12 +110,17 @@ export const FlightPriceTracker = () => {
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-travel-dark text-2xl">Flight Price Tracker</CardTitle>
+        <CardTitle className="text-travel-dark text-2xl flex items-center gap-2">
+          <PlaneTakeoff className="h-6 w-6 text-travel-blue" />
+          Flight Price Tracker
+        </CardTitle>
         <CardDescription>
           Get estimated flight prices and find the best time to book
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-0">
+        <OpenAIKeyInput onKeyChange={(key) => setHasApiKey(!!key)} />
+      
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
@@ -178,14 +195,31 @@ export const FlightPriceTracker = () => {
               className="w-full bg-travel-blue hover:bg-travel-teal transition-colors"
               disabled={isLoading || !fromAirport || !toAirport || !departureDate}
             >
-              {isLoading ? "Searching..." : "Search Flights"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <PlaneTakeoff className="mr-2 h-4 w-4" />
+                  Search Flights
+                </>
+              )}
             </Button>
+            
+            {hasApiKey && (
+              <p className="text-xs text-muted-foreground italic text-center">
+                Using OpenAI for enhanced price predictions
+              </p>
+            )}
           </div>
           
-          <div className="bg-travel-light rounded-lg p-6 flex items-center justify-center">
+          <div className="bg-travel-light rounded-lg p-6 flex items-center justify-center shadow-sm">
             <div className="w-full">
               {isLoading ? (
                 <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-travel-blue mb-4" />
                   <p className="text-gray-600">Searching for the best flight prices...</p>
                 </div>
               ) : flightPrice ? (
@@ -205,7 +239,7 @@ export const FlightPriceTracker = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                  <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
                     <h4 className="font-medium text-travel-dark mb-2">Flight Details</h4>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
@@ -229,11 +263,16 @@ export const FlightPriceTracker = () => {
                     </div>
                   </div>
                   
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-md">
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-md shadow-sm">
                     <h4 className="font-medium text-travel-blue mb-2">Booking Tips</h4>
                     <p className="text-sm text-gray-700">
                       <span className="font-medium">Best time to book:</span> {flightPrice.bestDayToBook}
                     </p>
+                    {flightPrice.tip && (
+                      <p className="text-sm text-gray-700 mt-1">
+                        <span className="font-medium">Pro tip:</span> {flightPrice.tip}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-700 mt-1">
                       {flightPrice.priceClass === "high" 
                         ? "Prices are high for this date. Consider booking immediately or changing your travel dates."
@@ -246,6 +285,11 @@ export const FlightPriceTracker = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-gray-600">Select departure and arrival airports and a date to see estimated flight prices.</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {hasApiKey 
+                      ? "Using AI-powered pricing for accurate estimates" 
+                      : "Add your OpenAI API key for more accurate price predictions"}
+                  </p>
                 </div>
               )}
             </div>
