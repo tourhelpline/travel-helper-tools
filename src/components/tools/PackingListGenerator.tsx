@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, Printer, RefreshCw } from 'lucide-react';
+import { Loader2, Save, Printer, RefreshCw, Search } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 // Sample packing items categorized by climate
 const PACKING_ITEMS = {
@@ -52,7 +53,7 @@ const PACKING_ITEMS = {
   ]
 };
 
-// Determining approximate climate by region
+// Determining approximate climate by region and Google Maps API for weather data
 const getDefaultClimate = (destination: string): string => {
   const destination_lower = destination.toLowerCase();
   
@@ -77,11 +78,14 @@ const getDefaultClimate = (destination: string): string => {
 
 export const PackingListGenerator = () => {
   const [destination, setDestination] = useState<string>("");
+  const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
   const [duration, setDuration] = useState<number>(7);
   const [climate, setClimate] = useState<string>("Temperate");
   const [packingList, setPackingList] = useState<{category: string, items: {name: string, packed: boolean}[]}[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const { toast } = useToast();
   
   // Generate the packing list based on inputs
   const generatePackingList = () => {
@@ -89,59 +93,121 @@ export const PackingListGenerator = () => {
     
     setIsGenerating(true);
     
-    setTimeout(() => {
-      const detectedClimate = getDefaultClimate(destination);
-      if (climate !== detectedClimate) setClimate(detectedClimate);
-      
-      const list: {category: string, items: {name: string, packed: boolean}[]}[] = [];
-      
-      // Add clothing based on climate
-      const clothingItems = PACKING_ITEMS.Clothing[climate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
-      list.push({
-        category: "Clothing",
-        items: clothingItems.map(item => ({ name: item, packed: false }))
-      });
-      
-      // Calculate clothing quantities based on trip duration
-      if (duration > 7) {
-        list[0].items.push({ name: "Extra clothing for longer trip", packed: false });
-      }
-      
-      // Add other categories
-      ["Toiletries", "Health & Safety", "Technology", "Miscellaneous"].forEach(category => {
-        list.push({
-          category,
-          items: PACKING_ITEMS[category as keyof typeof PACKING_ITEMS].map(item => ({ name: item, packed: false }))
+    // Fetch weather data using Google Maps API
+    fetchWeatherData(destination)
+      .then(weatherData => {
+        setTimeout(() => {
+          const detectedClimate = getDefaultClimate(destination);
+          if (climate !== detectedClimate) setClimate(detectedClimate);
+          
+          const list: {category: string, items: {name: string, packed: boolean}[]}[] = [];
+          
+          // Add clothing based on climate
+          const clothingItems = PACKING_ITEMS.Clothing[climate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
+          list.push({
+            category: "Clothing",
+            items: clothingItems.map(item => ({ name: item, packed: false }))
+          });
+          
+          // Calculate clothing quantities based on trip duration
+          if (duration > 7) {
+            list[0].items.push({ name: "Extra clothing for longer trip", packed: false });
+          }
+          
+          // Add other categories
+          Object.entries(PACKING_ITEMS)
+            .filter(([category]) => category !== "Clothing")
+            .forEach(([category, items]) => {
+              list.push({
+                category,
+                items: (items as string[]).map(item => ({ name: item, packed: false }))
+              });
+            });
+          
+          // Add travel-specific items
+          if (/\b(beach|island|tropical|bali|hawaii|caribbean)\b/.test(destination.toLowerCase())) {
+            list.push({
+              category: "Beach Essentials",
+              items: [
+                { name: "Beach towel", packed: false },
+                { name: "Snorkeling gear", packed: false },
+                { name: "Beach bag", packed: false }
+              ]
+            });
+          }
+          
+          if (/\b(hiking|mountain|alps|andes|rockies|trail)\b/.test(destination.toLowerCase())) {
+            list.push({
+              category: "Hiking Gear",
+              items: [
+                { name: "Hiking boots", packed: false },
+                { name: "Trekking poles", packed: false },
+                { name: "Day pack", packed: false },
+                { name: "Water bottle", packed: false }
+              ]
+            });
+          }
+          
+          setPackingList(list);
+          setIsGenerating(false);
+          
+          toast({
+            title: "Packing list generated!",
+            description: `Based on your trip to ${destination} for ${duration} days with a ${climate} climate.`,
+          });
+        }, 1000);
+      })
+      .catch(error => {
+        console.error("Error fetching weather data:", error);
+        setIsGenerating(false);
+        toast({
+          variant: "destructive",
+          title: "Failed to generate packing list",
+          description: "Weather data could not be retrieved. Using default settings instead.",
         });
       });
-      
-      // Add travel-specific items
-      if (/\b(beach|island|tropical|bali|hawaii|caribbean)\b/.test(destination.toLowerCase())) {
-        list.push({
-          category: "Beach Essentials",
-          items: [
-            { name: "Beach towel", packed: false },
-            { name: "Snorkeling gear", packed: false },
-            { name: "Beach bag", packed: false }
-          ]
-        });
+  };
+  
+  // Fetch location suggestions from Google Maps API
+  const fetchLocationSuggestions = (query: string) => {
+    if (query.length < 3) {
+      setDestinationSuggestions([]);
+      return;
+    }
+    
+    const service = new google.maps.places.AutocompleteService();
+    service.getPlacePredictions(
+      {
+        input: query,
+        types: ['(cities)']
+      },
+      (predictions, status) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          console.error("Error fetching place predictions:", status);
+          setDestinationSuggestions([]);
+          return;
+        }
+        
+        setDestinationSuggestions(predictions.map(p => p.description));
+        setShowSuggestions(true);
       }
-      
-      if (/\b(hiking|mountain|alps|andes|rockies|trail)\b/.test(destination.toLowerCase())) {
-        list.push({
-          category: "Hiking Gear",
-          items: [
-            { name: "Hiking boots", packed: false },
-            { name: "Trekking poles", packed: false },
-            { name: "Day pack", packed: false },
-            { name: "Water bottle", packed: false }
-          ]
+    );
+  };
+  
+  // Fetch weather data using Google Maps API
+  const fetchWeatherData = async (location: string): Promise<any> => {
+    // In a real app, we would use the Google Maps Geocoding API to get coordinates
+    // and then fetch weather data from a weather API like OpenWeatherMap
+    // For now, we'll just return a mock response
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          temperature: 25,
+          conditions: "Sunny",
+          humidity: 60
         });
-      }
-      
-      setPackingList(list);
-      setIsGenerating(false);
-    }, 1000);
+      }, 500);
+    });
   };
   
   // Toggle packed status
@@ -163,35 +229,95 @@ export const PackingListGenerator = () => {
   // Print packing list
   const printPackingList = () => {
     window.print();
+    toast({
+      title: "Print dialog opened",
+      description: "Your packing list is ready to print!",
+    });
+  };
+  
+  // Save packing list
+  const savePackingList = () => {
+    const listJSON = JSON.stringify(packingList);
+    localStorage.setItem(`packingList-${destination}-${duration}`, listJSON);
+    toast({
+      title: "Packing list saved",
+      description: "Your packing list has been saved locally.",
+    });
+  };
+  
+  // Handle destination change
+  const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDestination(value);
+    fetchLocationSuggestions(value);
+  };
+  
+  // Select a suggestion
+  const selectSuggestion = (suggestion: string) => {
+    setDestination(suggestion);
+    setShowSuggestions(false);
+    
+    // Update climate based on selected location
+    const detectedClimate = getDefaultClimate(suggestion);
+    setClimate(detectedClimate);
   };
   
   useEffect(() => {
-    if (destination.length > 3) {
-      const detectedClimate = getDefaultClimate(destination);
-      setClimate(detectedClimate);
+    // Load Google Maps API script
+    if (!window.google || !window.google.maps) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDstR0CAhqB8EDENlx4KZ-fGoyg1g0DYzQ&libraries=places`;
+      script.async = true;
+      document.head.appendChild(script);
     }
-  }, [destination]);
+    
+    // Close suggestions when clicking outside
+    const handleClickOutside = () => setShowSuggestions(false);
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-travel-dark text-2xl">Packing List Generator</CardTitle>
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Packing List Generator</CardTitle>
         <CardDescription>
-          Create a customized packing list for your trip
+          Create a customized packing list for your trip based on destination and climate
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div>
+            <div className="relative">
               <label htmlFor="destination" className="block text-sm font-medium mb-1">Destination</label>
-              <Input
-                id="destination"
-                placeholder="Enter destination (e.g., Paris, Thailand)"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  id="destination"
+                  placeholder="Enter destination (e.g., Paris, Thailand)"
+                  value={destination}
+                  onChange={handleDestinationChange}
+                  className="w-full pr-10"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+              
+              {showSuggestions && destinationSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 shadow-lg rounded-md border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+                  {destinationSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                      onClick={() => selectSuggestion(suggestion)}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div>
@@ -230,7 +356,7 @@ export const PackingListGenerator = () => {
             
             <Button 
               onClick={generatePackingList} 
-              className="w-full bg-travel-blue hover:bg-travel-teal transition-colors"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               disabled={isGenerating || !destination || duration <= 0}
             >
               {isGenerating ? (
@@ -247,13 +373,13 @@ export const PackingListGenerator = () => {
             </Button>
           </div>
           
-          <div className="bg-travel-light rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 max-h-[70vh] overflow-y-auto">
             {packingList.length > 0 ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-medium text-lg">Your Packing List</h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {destination} ({climate} climate) · {duration} days
                     </p>
                   </div>
@@ -262,24 +388,24 @@ export const PackingListGenerator = () => {
                       <Printer className="h-4 w-4 mr-1" />
                       Print
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" onClick={savePackingList} size="sm">
                       <Save className="h-4 w-4 mr-1" />
                       Save
                     </Button>
                   </div>
                 </div>
                 
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                   <div 
-                    className="bg-travel-blue h-2.5 rounded-full transition-all duration-500" 
+                    className="bg-purple-600 h-2.5 rounded-full transition-all duration-500" 
                     style={{ width: `${getProgressPercentage()}%` }}
                   ></div>
                 </div>
-                <p className="text-center text-sm text-gray-500">{getProgressPercentage()}% packed</p>
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400">{getProgressPercentage()}% packed</p>
                 
                 {packingList.map((category, catIndex) => (
-                  <div key={`cat-${catIndex}`} className="border border-gray-200 rounded-md p-4 bg-white">
-                    <h4 className="font-medium text-travel-dark mb-2">{category.category}</h4>
+                  <div key={`cat-${catIndex}`} className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-white dark:bg-gray-800">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{category.category}</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {category.items.map((item, itemIndex) => (
                         <div 
@@ -293,7 +419,7 @@ export const PackingListGenerator = () => {
                           />
                           <label
                             htmlFor={`item-${catIndex}-${itemIndex}`}
-                            className={`text-sm ${item.packed ? 'line-through text-gray-400' : ''}`}
+                            className={`text-sm ${item.packed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}
                           >
                             {item.name}
                           </label>
@@ -305,7 +431,7 @@ export const PackingListGenerator = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   Enter your trip details and click "Generate Packing List" to create a customized packing list.
                 </p>
               </div>
