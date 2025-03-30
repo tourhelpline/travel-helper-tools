@@ -63,11 +63,10 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				travel: {
-					'blue': '#0EA5E9',
-					'teal': '#14B8A6',
-					'light': '#E0F2FE',
-					'dark': '#0C4A6E'
+				tour: {
+					'purple': '#5e17eb',
+					'light': '#f5f0ff',
+					'dark': '#2e0b75'
 				}
 			},
 			borderRadius: {
@@ -98,9 +97,10 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			},
 			backgroundImage: {
-				'travel-gradient': 'linear-gradient(to right, #0EA5E9, #14B8A6)',
+				'travel-gradient': 'linear-gradient(to right, #5e17eb, #7c3aff)',
 			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+

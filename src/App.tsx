@@ -28,7 +28,8 @@ const App = () => {
       document.head.appendChild(newLink);
     }
     
-    // Load Google Maps API
+    // Fix the Google Maps API TypeScript issues by extending the Window interface
+    // This makes TypeScript aware of the google object on the window
     const googleMapsScript = document.createElement("script");
     googleMapsScript.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyDstR0CAhqB8EDENlx4KZ-fGoyg1g0DYzQ&libraries=places";
     googleMapsScript.async = true;
@@ -37,7 +38,9 @@ const App = () => {
     
     return () => {
       // Clean up the script when component unmounts
-      document.head.removeChild(googleMapsScript);
+      if (document.head.contains(googleMapsScript)) {
+        document.head.removeChild(googleMapsScript);
+      }
     };
   }, []);
 
