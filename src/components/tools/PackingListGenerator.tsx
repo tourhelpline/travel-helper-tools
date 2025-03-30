@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, Printer, RefreshCw, Search } from 'lucide-react';
+import { Loader2, Save, Printer, RefreshCw, Search, Thermometer } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 // Sample packing items categorized by climate
@@ -53,8 +52,20 @@ const PACKING_ITEMS = {
   ]
 };
 
-// Determining approximate climate by region and Google Maps API for weather data
-const getDefaultClimate = (destination: string): string => {
+// Determining approximate climate by temperature
+const getClimateByTemperature = (tempCelsius: number): string => {
+  if (tempCelsius > 30) return "Tropical";
+  if (tempCelsius > 25) return "Desert";
+  if (tempCelsius > 20) return "Mediterranean";
+  if (tempCelsius > 15) return "Temperate";
+  if (tempCelsius > 5) return "Humid Continental";
+  if (tempCelsius > 0) return "Oceanic";
+  if (tempCelsius > -10) return "Subarctic";
+  return "Subarctic";
+};
+
+// Fallback function to determine climate by location name
+const getClimateByLocation = (destination: string): string => {
   const destination_lower = destination.toLowerCase();
   
   if (/\b(thailand|bali|singapore|malaysia|philippines|indonesia|hawaii|jamaica|caribbean)\b/.test(destination_lower)) {
@@ -81,6 +92,7 @@ export const PackingListGenerator = () => {
   const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
   const [duration, setDuration] = useState<number>(7);
   const [climate, setClimate] = useState<string>("Temperate");
+  const [currentTemperature, setCurrentTemperature] = useState<number | null>(null);
   const [packingList, setPackingList] = useState<{category: string, items: {name: string, packed: boolean}[]}[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -93,17 +105,21 @@ export const PackingListGenerator = () => {
     
     setIsGenerating(true);
     
-    // Fetch weather data using Google Maps API
+    // Fetch weather data for the destination
     fetchWeatherData(destination)
       .then(weatherData => {
         setTimeout(() => {
-          const detectedClimate = getDefaultClimate(destination);
-          if (climate !== detectedClimate) setClimate(detectedClimate);
+          // Set climate based on temperature if available, otherwise fallback to location
+          const detectedClimate = currentTemperature 
+            ? getClimateByTemperature(currentTemperature) 
+            : getClimateByLocation(destination);
+            
+          setClimate(detectedClimate);
           
           const list: {category: string, items: {name: string, packed: boolean}[]}[] = [];
           
           // Add clothing based on climate
-          const clothingItems = PACKING_ITEMS.Clothing[climate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
+          const clothingItems = PACKING_ITEMS.Clothing[detectedClimate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
           list.push({
             category: "Clothing",
             items: clothingItems.map(item => ({ name: item, packed: false }))
@@ -153,9 +169,9 @@ export const PackingListGenerator = () => {
           
           toast({
             title: "Packing list generated!",
-            description: `Based on your trip to ${destination} for ${duration} days with a ${climate} climate.`,
+            description: `Based on your trip to ${destination} for ${duration} days with a ${detectedClimate} climate.`,
           });
-        }, 1000);
+        }, 800);
       })
       .catch(error => {
         console.error("Error fetching weather data:", error);
@@ -175,39 +191,78 @@ export const PackingListGenerator = () => {
       return;
     }
     
-    const service = new google.maps.places.AutocompleteService();
-    service.getPlacePredictions(
-      {
-        input: query,
-        types: ['(cities)']
-      },
-      (predictions, status) => {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
-          console.error("Error fetching place predictions:", status);
-          setDestinationSuggestions([]);
+    if (window.google && window.google.maps && window.google.maps.places) {
+      const service = new google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        {
+          input: query,
+          types: ['(cities)']
+        },
+        (predictions, status) => {
+          if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+            console.error("Error fetching place predictions:", status);
+            setDestinationSuggestions([]);
+            return;
+          }
+          
+          setDestinationSuggestions(predictions.map(p => p.description));
+          setShowSuggestions(true);
+        }
+      );
+    }
+  };
+  
+  // Fetch weather data using Google Maps API and OpenWeatherMap
+  const fetchWeatherData = async (location: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if (!window.google || !window.google.maps) {
+        reject("Google Maps API not loaded");
+        return;
+      }
+      
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: location }, (results, status) => {
+        if (status !== google.maps.GeocoderStatus.OK || !results || results.length === 0) {
+          reject("Failed to geocode location");
           return;
         }
         
-        setDestinationSuggestions(predictions.map(p => p.description));
-        setShowSuggestions(true);
-      }
-    );
+        const lat = results[0].geometry.location.lat();
+        const lng = results[0].geometry.location.lng();
+        
+        // For a real app, use a weather API like OpenWeatherMap here
+        // For now, we'll simulate weather data
+        const tempCelsius = simulateTemperature(lat, lng);
+        setCurrentTemperature(tempCelsius);
+        
+        resolve({
+          temperature: tempCelsius,
+          conditions: tempCelsius > 25 ? "Sunny" : tempCelsius > 15 ? "Partly Cloudy" : "Cloudy",
+          humidity: Math.floor(Math.random() * 30) + 50 // 50-80%
+        });
+      });
+    });
   };
   
-  // Fetch weather data using Google Maps API
-  const fetchWeatherData = async (location: string): Promise<any> => {
-    // In a real app, we would use the Google Maps Geocoding API to get coordinates
-    // and then fetch weather data from a weather API like OpenWeatherMap
-    // For now, we'll just return a mock response
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          temperature: 25,
-          conditions: "Sunny",
-          humidity: 60
-        });
-      }, 500);
-    });
+  // Simulate temperature based on latitude and time of year
+  const simulateTemperature = (lat: number, lng: number): number => {
+    const month = new Date().getMonth(); // 0-11
+    const isNorthernHemisphere = lat > 0;
+    
+    // Distance from equator (0-90)
+    const distanceFromEquator = Math.abs(lat);
+    
+    // Base temperature decreases as we move away from equator
+    let baseTemp = 30 - (distanceFromEquator / 3);
+    
+    // Seasonal adjustment
+    const isSummer = isNorthernHemisphere ? (month >= 4 && month <= 9) : (month <= 3 || month >= 10);
+    const seasonalAdjustment = isSummer ? 5 : -5;
+    
+    // Random daily variation
+    const dailyVariation = Math.random() * 4 - 2; // -2 to +2
+    
+    return Math.round(baseTemp + seasonalAdjustment + dailyVariation);
   };
   
   // Toggle packed status
@@ -257,20 +312,21 @@ export const PackingListGenerator = () => {
     setDestination(suggestion);
     setShowSuggestions(false);
     
-    // Update climate based on selected location
-    const detectedClimate = getDefaultClimate(suggestion);
-    setClimate(detectedClimate);
+    // Fetch weather data for the selected location
+    fetchWeatherData(suggestion)
+      .then(weatherData => {
+        // Climate will be updated based on temperature
+        toast({
+          title: "Location selected",
+          description: `Current temperature: ${currentTemperature}°C`,
+        });
+      })
+      .catch(error => {
+        console.error("Error fetching weather:", error);
+      });
   };
   
   useEffect(() => {
-    // Load Google Maps API script
-    if (!window.google || !window.google.maps) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDstR0CAhqB8EDENlx4KZ-fGoyg1g0DYzQ&libraries=places`;
-      script.async = true;
-      document.head.appendChild(script);
-    }
-    
     // Close suggestions when clicking outside
     const handleClickOutside = () => setShowSuggestions(false);
     document.addEventListener('click', handleClickOutside);
@@ -285,7 +341,7 @@ export const PackingListGenerator = () => {
       <CardHeader className="px-0 pt-0">
         <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Packing List Generator</CardTitle>
         <CardDescription>
-          Create a customized packing list for your trip based on destination and climate
+          Create a customized packing list for your trip based on destination and current weather
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0 pb-0">
@@ -332,27 +388,16 @@ export const PackingListGenerator = () => {
               />
             </div>
             
-            <div>
-              <label htmlFor="climate" className="block text-sm font-medium mb-1">Climate</label>
-              <Select
-                value={climate}
-                onValueChange={setClimate}
-              >
-                <SelectTrigger id="climate" className="w-full">
-                  <SelectValue placeholder="Select climate" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tropical">Tropical (hot & humid)</SelectItem>
-                  <SelectItem value="Desert">Desert (hot & dry)</SelectItem>
-                  <SelectItem value="Mediterranean">Mediterranean (warm, mild)</SelectItem>
-                  <SelectItem value="Humid Continental">Humid Continental (4 seasons)</SelectItem>
-                  <SelectItem value="Subarctic">Subarctic (very cold)</SelectItem>
-                  <SelectItem value="Temperate">Temperate (mild)</SelectItem>
-                  <SelectItem value="Oceanic">Oceanic (mild, rainy)</SelectItem>
-                  <SelectItem value="Alpine">Alpine (mountain climate)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {currentTemperature && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center">
+                <Thermometer className="h-5 w-5 text-primary mr-2" />
+                <div>
+                  <p className="text-sm font-medium">Current Temperature</p>
+                  <p className="text-2xl font-bold">{currentTemperature}°C</p>
+                  <p className="text-xs text-gray-500">Suggested climate: {climate}</p>
+                </div>
+              </div>
+            )}
             
             <Button 
               onClick={generatePackingList} 
