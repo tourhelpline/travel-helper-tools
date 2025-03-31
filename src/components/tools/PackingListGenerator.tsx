@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Check, Clipboard, Copy, MapPin, Cloud, Thermometer } from 'lucide-react';
+import { Check, Clipboard, Copy, MapPin, Cloud, Thermometer, AlertCircle } from 'lucide-react';
 import { getPackingListSuggestions } from '@/lib/api';
 import { fetchWeatherForLocation, WeatherData } from '@/lib/weatherUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -14,7 +14,6 @@ export const PackingListGenerator = () => {
   const { toast } = useToast();
   const [destination, setDestination] = useState('');
   const [duration, setDuration] = useState('7');
-  const [climate, setClimate] = useState('moderate');
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [travelerType, setTravelerType] = useState('solo-male');
   const [packingList, setPackingList] = useState<any>(null);
@@ -101,7 +100,6 @@ export const PackingListGenerator = () => {
       
       if (data) {
         setWeatherData(data);
-        setClimate(data.climate); // Set the climate automatically based on weather data
         
         toast({
           title: "Weather data retrieved",
@@ -110,6 +108,11 @@ export const PackingListGenerator = () => {
       }
     } catch (error) {
       console.error("Error fetching weather data:", error);
+      toast({
+        title: "Could not retrieve weather data",
+        description: "We'll generate a generic packing list instead",
+        variant: "destructive"
+      });
     } finally {
       setLoadingWeather(false);
     }
@@ -133,11 +136,14 @@ export const PackingListGenerator = () => {
       await fetchWeatherData(destination);
     }
     
+    // Get the climate from weather data or use 'moderate' as fallback
+    const climate = weatherData ? weatherData.climate : 'moderate';
+    
     // This would normally hit the OpenAI API, but for demo purposes we'll mock the response
     const mockResponse = getMockPackingList(
       destination, 
       parseInt(duration), 
-      weatherData ? weatherData.climate : climate, 
+      climate, 
       travelerType
     );
     
@@ -152,7 +158,7 @@ export const PackingListGenerator = () => {
   const copyToClipboard = () => {
     if (!packingList) return;
     
-    let clipboardText = `Packing List for ${destination} (${duration} days, ${climate} climate)\n\n`;
+    let clipboardText = `Packing List for ${destination} (${duration} days, ${weatherData ? weatherData.climate : 'unknown'} climate)\n\n`;
     
     packingList.categories.forEach((category: any) => {
       clipboardText += `${category.name.toUpperCase()}:\n`;
@@ -218,7 +224,7 @@ export const PackingListGenerator = () => {
           </div>
           
           {/* Weather data display */}
-          {weatherData && (
+          {weatherData ? (
             <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-md flex items-center space-x-3">
               <div className="bg-white dark:bg-gray-800 p-2 rounded-full">
                 <Thermometer className="h-5 w-5 text-purple-500" />
@@ -232,6 +238,20 @@ export const PackingListGenerator = () => {
                 </p>
               </div>
             </div>
+          ) : (
+            destination && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md flex items-center space-x-3">
+                <div className="bg-white dark:bg-gray-800 p-2 rounded-full">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Weather data not available yet</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    We'll fetch it when you generate your packing list
+                  </p>
+                </div>
+              </div>
+            )
           )}
           
           <div>
@@ -243,29 +263,6 @@ export const PackingListGenerator = () => {
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             />
-          </div>
-          
-          <div>
-            <Label htmlFor="climate" className="text-sm font-medium mb-2 block">
-              Climate {weatherData && "(Auto-detected from weather data)"}
-            </Label>
-            <Select 
-              value={climate} 
-              onValueChange={setClimate}
-              disabled={!!weatherData} // Disable manual selection if we have weather data
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select climate" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cold">Cold (Below 50°F/10°C)</SelectItem>
-                <SelectItem value="moderate">Moderate (50-70°F/10-21°C)</SelectItem>
-                <SelectItem value="warm">Warm (70-85°F/21-29°C)</SelectItem>
-                <SelectItem value="hot">Hot (Above 85°F/29°C)</SelectItem>
-                <SelectItem value="tropical">Tropical (Hot & Humid)</SelectItem>
-                <SelectItem value="variable">Variable/Mixed</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           
           <div>
@@ -286,10 +283,10 @@ export const PackingListGenerator = () => {
           
           <Button 
             onClick={generatePackingList} 
-            disabled={loading}
+            disabled={loading || loadingWeather}
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
           >
-            {loading ? "Generating..." : "Generate Packing List"}
+            {loading ? "Generating..." : (loadingWeather ? "Fetching Weather..." : "Generate Packing List")}
           </Button>
         </div>
         

@@ -43,7 +43,7 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
   
   // Use different logo based on theme
   const logoPath = theme === 'dark' 
-    ? '/lovable-uploads/6f0c6936-4ca6-45cc-ab77-4e1bf6d6944a.png' 
+    ? '/lovable-uploads/41a027d9-5eaa-45f2-b58b-308e20d618aa.png' 
     : '/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png';
   
   const toolDescriptions = {
