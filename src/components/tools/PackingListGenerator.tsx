@@ -4,52 +4,92 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Save, Printer, RefreshCw, Search, Thermometer } from 'lucide-react';
+import { Loader2, Save, Printer, RefreshCw, Search, Thermometer, UsersRound, User, Baby } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Sample packing items categorized by climate
+// Sample packing items categorized by climate and traveler type
 const PACKING_ITEMS = {
   Clothing: {
-    Tropical: [
-      "T-shirts", "Shorts", "Sandals", "Light dresses/skirts", "Swimwear", "Sun hat", "Light rain jacket"
-    ],
-    Desert: [
-      "Light long-sleeve shirts", "Lightweight pants", "Sun hat", "Bandana/scarf", "Sunglasses", "Closed shoes"
-    ],
-    Mediterranean: [
-      "T-shirts", "Shorts", "Light sweater", "Light jacket", "Comfortable walking shoes", "Swimwear"
-    ],
-    "Humid Continental": [
-      "Mix of short and long-sleeve shirts", "Pants", "Light jacket", "Comfortable walking shoes"
-    ],
-    Subarctic: [
-      "Thermal base layers", "Sweaters", "Heavy jacket", "Gloves", "Winter hat", "Scarf", "Insulated boots"
-    ],
-    Temperate: [
-      "Mix of T-shirts and long sleeves", "Jeans/pants", "Light jacket or sweater", "Comfortable shoes"
-    ],
-    Oceanic: [
-      "Layers (T-shirts, long sleeves)", "Light sweater", "Waterproof jacket", "Jeans/pants", "Walking shoes"
-    ],
-    Alpine: [
-      "Thermal base layers", "Sweaters", "Down jacket", "Hiking boots", "Gloves", "Hat"
-    ]
+    Tropical: {
+      Male: ["T-shirts", "Shorts", "Sandals", "Light rain jacket", "Swimming trunks", "Casual shirts"],
+      Female: ["T-shirts", "Shorts", "Sandals", "Light dresses/skirts", "Swimwear", "Sun hat", "Light rain jacket"],
+      Couple: ["T-shirts", "Shorts", "Sandals", "Light dresses/skirts", "Swimwear", "Sun hats", "Light rain jackets"],
+      "Couple with Kids": ["T-shirts", "Shorts", "Sandals", "Light dresses/skirts", "Swimwear", "Sun hats", "Light rain jackets", "Kids swimwear", "Kids sandals", "Kids sun hats", "Kids casual wear"]
+    },
+    Desert: {
+      Male: ["Light long-sleeve shirts", "Lightweight pants", "Sun hat", "Bandana/scarf", "Sunglasses", "Closed shoes"],
+      Female: ["Light long-sleeve shirts", "Lightweight pants", "Sun hat", "Bandana/scarf", "Sunglasses", "Closed shoes", "Light long skirts/dresses"],
+      Couple: ["Light long-sleeve shirts", "Lightweight pants", "Sun hats", "Bandanas/scarves", "Sunglasses", "Closed shoes", "Light long skirts/dresses"],
+      "Couple with Kids": ["Light long-sleeve shirts", "Lightweight pants", "Sun hats", "Bandanas/scarves", "Sunglasses", "Closed shoes", "Light long skirts/dresses", "Kids sun protective clothing", "Kids closed shoes", "Kids sun hats"]
+    },
+    Mediterranean: {
+      Male: ["T-shirts", "Shorts", "Light sweater", "Light jacket", "Comfortable walking shoes", "Swimming trunks"],
+      Female: ["T-shirts", "Shorts", "Light sweater", "Light jacket", "Comfortable walking shoes", "Swimwear", "Summer dresses"],
+      Couple: ["T-shirts", "Shorts", "Light sweaters", "Light jackets", "Comfortable walking shoes", "Swimwear", "Summer dresses"],
+      "Couple with Kids": ["T-shirts", "Shorts", "Light sweaters", "Light jackets", "Comfortable walking shoes", "Swimwear", "Summer dresses", "Kids light sweaters", "Kids comfortable shoes", "Kids swimwear"]
+    },
+    "Humid Continental": {
+      Male: ["Mix of short and long-sleeve shirts", "Pants", "Light jacket", "Comfortable walking shoes"],
+      Female: ["Mix of short and long-sleeve shirts", "Pants", "Skirts", "Light jacket", "Comfortable walking shoes"],
+      Couple: ["Mix of short and long-sleeve shirts", "Pants", "Skirts", "Light jackets", "Comfortable walking shoes"],
+      "Couple with Kids": ["Mix of short and long-sleeve shirts", "Pants", "Skirts", "Light jackets", "Comfortable walking shoes", "Kids pants", "Kids tops", "Kids light jackets"]
+    },
+    Subarctic: {
+      Male: ["Thermal base layers", "Sweaters", "Heavy jacket", "Gloves", "Winter hat", "Scarf", "Insulated boots"],
+      Female: ["Thermal base layers", "Sweaters", "Heavy jacket", "Gloves", "Winter hat", "Scarf", "Insulated boots"],
+      Couple: ["Thermal base layers", "Sweaters", "Heavy jackets", "Gloves", "Winter hats", "Scarves", "Insulated boots"],
+      "Couple with Kids": ["Thermal base layers", "Sweaters", "Heavy jackets", "Gloves", "Winter hats", "Scarves", "Insulated boots", "Kids thermal layers", "Kids winter coats", "Kids gloves/mittens", "Kids winter boots"]
+    },
+    Temperate: {
+      Male: ["Mix of T-shirts and long sleeves", "Jeans/pants", "Light jacket or sweater", "Comfortable shoes"],
+      Female: ["Mix of T-shirts and long sleeves", "Jeans/pants", "Light jacket or sweater", "Comfortable shoes", "Versatile dress/skirt"],
+      Couple: ["Mix of T-shirts and long sleeves", "Jeans/pants", "Light jackets or sweaters", "Comfortable shoes", "Versatile dresses/skirts"],
+      "Couple with Kids": ["Mix of T-shirts and long sleeves", "Jeans/pants", "Light jackets or sweaters", "Comfortable shoes", "Versatile dresses/skirts", "Kids jeans/pants", "Kids t-shirts", "Kids light jackets"]
+    },
+    Oceanic: {
+      Male: ["Layers (T-shirts, long sleeves)", "Light sweater", "Waterproof jacket", "Jeans/pants", "Walking shoes"],
+      Female: ["Layers (T-shirts, long sleeves)", "Light sweater", "Waterproof jacket", "Jeans/pants", "Walking shoes"],
+      Couple: ["Layers (T-shirts, long sleeves)", "Light sweaters", "Waterproof jackets", "Jeans/pants", "Walking shoes"],
+      "Couple with Kids": ["Layers (T-shirts, long sleeves)", "Light sweaters", "Waterproof jackets", "Jeans/pants", "Walking shoes", "Kids waterproof jackets", "Kids layers", "Kids comfortable shoes"]
+    },
+    Alpine: {
+      Male: ["Thermal base layers", "Sweaters", "Down jacket", "Hiking boots", "Gloves", "Hat"],
+      Female: ["Thermal base layers", "Sweaters", "Down jacket", "Hiking boots", "Gloves", "Hat"],
+      Couple: ["Thermal base layers", "Sweaters", "Down jackets", "Hiking boots", "Gloves", "Hats"],
+      "Couple with Kids": ["Thermal base layers", "Sweaters", "Down jackets", "Hiking boots", "Gloves", "Hats", "Kids thermal layers", "Kids warm jackets", "Kids hiking shoes", "Kids warm accessories"]
+    }
   },
-  Toiletries: [
-    "Toothbrush & toothpaste", "Deodorant", "Shampoo & conditioner", "Soap/body wash", "Razor", "Sunscreen", 
-    "Moisturizer", "Lip balm"
-  ],
-  "Health & Safety": [
-    "Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", 
-    "Travel insurance info"
-  ],
-  Technology: [
-    "Phone & charger", "Camera", "Power adapter", "Portable power bank", "Headphones"
-  ],
-  Miscellaneous: [
-    "Passport/ID", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillow",
-    "Water bottle", "Day bag/backpack", "Books/e-reader"
-  ]
+  Toiletries: {
+    Male: ["Toothbrush & toothpaste", "Deodorant", "Shampoo & conditioner", "Soap/body wash", "Razor", "Sunscreen", "Moisturizer", "Lip balm", "Aftershave/cologne"],
+    Female: ["Toothbrush & toothpaste", "Deodorant", "Shampoo & conditioner", "Soap/body wash", "Razor", "Sunscreen", "Moisturizer", "Lip balm", "Makeup", "Makeup remover", "Hair accessories", "Feminine hygiene products"],
+    Couple: ["Toothbrushes & toothpaste", "Deodorants", "Shampoo & conditioner", "Soap/body wash", "Razors", "Sunscreen", "Moisturizer", "Lip balm", "Makeup", "Makeup remover", "Hair accessories", "Feminine hygiene products", "Aftershave/cologne"],
+    "Couple with Kids": ["Toothbrushes & toothpaste", "Deodorants", "Shampoo & conditioner", "Soap/body wash", "Razors", "Sunscreen", "Moisturizer", "Lip balm", "Makeup", "Makeup remover", "Hair accessories", "Feminine hygiene products", "Aftershave/cologne", "Baby wipes", "Diaper rash cream", "Kids toothbrushes", "Kids sunscreen", "Kids shampoo"]
+  },
+  "Health & Safety": {
+    Male: ["Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", "Travel insurance info"],
+    Female: ["Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", "Travel insurance info"],
+    Couple: ["Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", "Travel insurance info"],
+    "Couple with Kids": ["Prescription medications", "Basic first aid kit", "Pain relievers", "Hand sanitizer", "Insect repellent", "Travel insurance info", "Children's pain relief medication", "Band-aids with cartoon characters", "Thermometer", "Antihistamine", "Motion sickness medication"]
+  },
+  Technology: {
+    Male: ["Phone & charger", "Camera", "Power adapter", "Portable power bank", "Headphones"],
+    Female: ["Phone & charger", "Camera", "Power adapter", "Portable power bank", "Headphones"],
+    Couple: ["Phones & chargers", "Camera", "Power adapter", "Portable power bank", "Headphones", "Selfie stick"],
+    "Couple with Kids": ["Phones & chargers", "Camera", "Power adapter", "Portable power bank", "Headphones", "Selfie stick", "Tablet/iPad for kids", "Kids headphones", "Portable night light", "White noise machine"]
+  },
+  Miscellaneous: {
+    Male: ["Passport/ID", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillow", "Water bottle", "Day bag/backpack", "Books/e-reader"],
+    Female: ["Passport/ID", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillow", "Water bottle", "Day bag/backpack", "Books/e-reader", "Scarf/wrap", "Small purse"],
+    Couple: ["Passports/IDs", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillows", "Water bottles", "Day bags/backpacks", "Books/e-readers", "Scarf/wrap", "Small purse"],
+    "Couple with Kids": ["Passports/IDs", "Travel documents", "Local currency", "Credit/debit cards", "Sunglasses", "Travel pillows", "Water bottles", "Day bags/backpacks", "Books/e-readers", "Scarf/wrap", "Small purse", "Kids backpacks", "Comfort items/toys", "Snacks", "Activity books", "Kids water bottles"]
+  }
 };
 
 // Determining approximate climate by temperature
@@ -87,6 +127,8 @@ const getClimateByLocation = (destination: string): string => {
   }
 };
 
+type TravelerType = "Male" | "Female" | "Couple" | "Couple with Kids";
+
 export const PackingListGenerator = () => {
   const [destination, setDestination] = useState<string>("");
   const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
@@ -97,6 +139,7 @@ export const PackingListGenerator = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [travelerType, setTravelerType] = useState<TravelerType>("Male");
   const { toast } = useToast();
   
   // Generate the packing list based on inputs
@@ -118,8 +161,10 @@ export const PackingListGenerator = () => {
           
           const list: {category: string, items: {name: string, packed: boolean}[]}[] = [];
           
-          // Add clothing based on climate
-          const clothingItems = PACKING_ITEMS.Clothing[detectedClimate as keyof typeof PACKING_ITEMS.Clothing] || PACKING_ITEMS.Clothing.Temperate;
+          // Add clothing based on climate and traveler type
+          const clothingItems = PACKING_ITEMS.Clothing[detectedClimate as keyof typeof PACKING_ITEMS.Clothing][travelerType] || 
+                               PACKING_ITEMS.Clothing.Temperate[travelerType];
+                               
           list.push({
             category: "Clothing",
             items: clothingItems.map(item => ({ name: item, packed: false }))
@@ -130,37 +175,56 @@ export const PackingListGenerator = () => {
             list[0].items.push({ name: "Extra clothing for longer trip", packed: false });
           }
           
-          // Add other categories
+          // Add other categories based on traveler type
           Object.entries(PACKING_ITEMS)
             .filter(([category]) => category !== "Clothing")
             .forEach(([category, items]) => {
+              const travelerItems = items[travelerType as keyof typeof items] || [];
               list.push({
                 category,
-                items: (items as string[]).map(item => ({ name: item, packed: false }))
+                items: travelerItems.map(item => ({ name: item, packed: false }))
               });
             });
           
           // Add travel-specific items
           if (/\b(beach|island|tropical|bali|hawaii|caribbean)\b/.test(destination.toLowerCase())) {
+            const beachItems = [
+              { name: "Beach towel", packed: false },
+              { name: "Snorkeling gear", packed: false },
+              { name: "Beach bag", packed: false }
+            ];
+            
+            if (travelerType === "Couple with Kids") {
+              beachItems.push(
+                { name: "Beach toys for kids", packed: false },
+                { name: "Floaties/swim aids", packed: false }
+              );
+            }
+            
             list.push({
               category: "Beach Essentials",
-              items: [
-                { name: "Beach towel", packed: false },
-                { name: "Snorkeling gear", packed: false },
-                { name: "Beach bag", packed: false }
-              ]
+              items: beachItems
             });
           }
           
           if (/\b(hiking|mountain|alps|andes|rockies|trail)\b/.test(destination.toLowerCase())) {
+            const hikingItems = [
+              { name: "Hiking boots", packed: false },
+              { name: "Trekking poles", packed: false },
+              { name: "Day pack", packed: false },
+              { name: "Water bottle", packed: false }
+            ];
+            
+            if (travelerType === "Couple with Kids") {
+              hikingItems.push(
+                { name: "Child carrier/hiking backpack", packed: false },
+                { name: "Kids hiking shoes", packed: false }
+              );
+            }
+            
             list.push({
               category: "Hiking Gear",
-              items: [
-                { name: "Hiking boots", packed: false },
-                { name: "Trekking poles", packed: false },
-                { name: "Day pack", packed: false },
-                { name: "Water bottle", packed: false }
-              ]
+              items: hikingItems
             });
           }
           
@@ -169,7 +233,7 @@ export const PackingListGenerator = () => {
           
           toast({
             title: "Packing list generated!",
-            description: `Based on your trip to ${destination} for ${duration} days with a ${detectedClimate} climate.`,
+            description: `Based on your trip to ${destination} for ${duration} days with a ${detectedClimate} climate for ${travelerType}.`,
           });
         }, 800);
       })
@@ -336,10 +400,26 @@ export const PackingListGenerator = () => {
     };
   }, []);
 
+  // Get traveler type icon
+  const getTravelerTypeIcon = (type: TravelerType) => {
+    switch (type) {
+      case "Male":
+        return <User className="h-5 w-5" />;
+      case "Female":
+        return <User className="h-5 w-5" />;
+      case "Couple":
+        return <UsersRound className="h-5 w-5" />;
+      case "Couple with Kids":
+        return <Baby className="h-5 w-5" />;
+      default:
+        return <User className="h-5 w-5" />;
+    }
+  };
+
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Packing List Generator</CardTitle>
+        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-[#5e17eb] to-purple-500 bg-clip-text text-transparent">Packing List Generator</CardTitle>
         <CardDescription>
           Create a customized packing list for your trip based on destination and current weather
         </CardDescription>
@@ -376,21 +456,41 @@ export const PackingListGenerator = () => {
               )}
             </div>
             
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium mb-1">Trip Duration (days)</label>
-              <Input
-                id="duration"
-                type="number"
-                min="1"
-                value={duration}
-                onChange={(e) => setDuration(parseInt(e.target.value) || 7)}
-                className="w-full"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="duration" className="block text-sm font-medium mb-1">Trip Duration (days)</label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min="1"
+                  value={duration}
+                  onChange={(e) => setDuration(parseInt(e.target.value) || 7)}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="travelerType" className="block text-sm font-medium mb-1">Traveler Type</label>
+                <Select
+                  value={travelerType}
+                  onValueChange={(value) => setTravelerType(value as TravelerType)}
+                >
+                  <SelectTrigger id="travelerType" className="w-full">
+                    <SelectValue placeholder="Select traveler type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">{getTravelerTypeIcon("Male")} Male</SelectItem>
+                    <SelectItem value="Female">{getTravelerTypeIcon("Female")} Female</SelectItem>
+                    <SelectItem value="Couple">{getTravelerTypeIcon("Couple")} Couple</SelectItem>
+                    <SelectItem value="Couple with Kids">{getTravelerTypeIcon("Couple with Kids")} Couple with Kids</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {currentTemperature && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center">
-                <Thermometer className="h-5 w-5 text-primary mr-2" />
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center">
+                <Thermometer className="h-5 w-5 text-[#5e17eb] mr-2" />
                 <div>
                   <p className="text-sm font-medium">Current Temperature</p>
                   <p className="text-2xl font-bold">{currentTemperature}°C</p>
@@ -401,7 +501,7 @@ export const PackingListGenerator = () => {
             
             <Button 
               onClick={generatePackingList} 
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full bg-[#5e17eb] hover:bg-[#4e08dd] text-white"
               disabled={isGenerating || !destination || duration <= 0}
             >
               {isGenerating ? (
@@ -418,14 +518,14 @@ export const PackingListGenerator = () => {
             </Button>
           </div>
           
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+          <div className="bg-purple-50 dark:bg-gray-800/50 rounded-lg p-6 max-h-[70vh] overflow-y-auto">
             {packingList.length > 0 ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-medium text-lg">Your Packing List</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {destination} ({climate} climate) · {duration} days
+                      {destination} ({climate} climate) · {duration} days · {travelerType}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -442,7 +542,7 @@ export const PackingListGenerator = () => {
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                   <div 
-                    className="bg-purple-600 h-2.5 rounded-full transition-all duration-500" 
+                    className="bg-[#5e17eb] h-2.5 rounded-full transition-all duration-500" 
                     style={{ width: `${getProgressPercentage()}%` }}
                   ></div>
                 </div>

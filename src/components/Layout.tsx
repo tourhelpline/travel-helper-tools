@@ -13,31 +13,27 @@ import {
   SidebarSeparator
 } from '@/components/ui/sidebar';
 import { ModeToggle } from './ModeToggle';
-import { CurrencyConverter } from './tools/CurrencyConverter';
 import { TimeZoneConverter } from './tools/TimeZoneConverter';
 import { PackingListGenerator } from './tools/PackingListGenerator';
 import { DistanceCalculator } from './tools/DistanceCalculator';
-import { Clock, Currency, PackageCheck, Map, ExternalLink } from 'lucide-react';
+import { Clock, PackageCheck, Map, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from './ui/button';
-import { Separator } from './ui/separator';
 
 export const Layout = () => {
-  const [activeTool, setActiveTool] = useState<string>("currency");
+  const [activeTool, setActiveTool] = useState<string>("timezone");
   const { theme } = useTheme();
   
-  const darkLogo = '/lovable-uploads/41a027d9-5eaa-45f2-b58b-308e20d618aa.png';
+  const darkLogo = '/lovable-uploads/31a8e04d-2cc6-42d4-a914-82f3de9b11b8.png';
   const lightLogo = '/lovable-uploads/7b9aaeb8-4854-4a23-9e54-eae208a20491.png';
-  const newLogo = '/lovable-uploads/31a8e04d-2cc6-42d4-a914-82f3de9b11b8.png';
   
-  // Use the new logo for dark mode and the light logo for light mode
-  const logoSrc = theme === 'dark' ? newLogo : lightLogo;
+  // Choose logo based on theme
+  const logoSrc = theme === 'dark' ? darkLogo : lightLogo;
   
   const toolDescriptions = {
-    currency: "Easily convert between global currencies with real-time exchange rates. Perfect for travelers planning their budget or making international purchases.",
-    timezone: "Check the time difference between cities worldwide. Essential for scheduling calls, meetings, or activities across different time zones during your travels.",
-    packing: "Get customized packing suggestions based on your destination's climate and trip duration. Never forget essential items for your journey again.",
-    distance: "Calculate travel distances, time, and routes between locations worldwide using Google Maps data. Plan your trips with accurate travel information."
+    timezone: "The Time Zone Converter is an essential travel tool designed to help travelers navigate the complexities of global time differences with precision and ease. This intuitive tool allows users to compare local times across multiple international destinations simultaneously, making it invaluable for planning international trips, scheduling calls with overseas contacts, or simply staying connected with friends and family abroad. With support for all major time zones around the world, from GMT to specific city-based time zones like Tokyo (JST) or New York (EST), the converter accounts for daylight saving time changes automatically, ensuring accuracy year-round. The user-friendly interface presents time differences in a clear, visual format, highlighting the hours ahead or behind between locations. For business travelers, this tool proves indispensable when coordinating meetings across multiple time zones, helping to avoid scheduling conflicts and confusion. Additionally, the tool provides information about business hours, helping travelers understand when offices, banks, and government services are likely to be open in their destination. Whether planning a multi-city itinerary, arranging international communications, or simply wanting to know the best time to call home while traveling, this comprehensive time zone calculator eliminates the guesswork from international time calculations, ensuring travelers stay punctual and connected regardless of their global location.",
+    packing: "The Packing List Generator is a sophisticated travel planning tool designed to eliminate the stress and uncertainty from pre-trip preparation. This intelligent system creates comprehensive, personalized packing lists tailored to a traveler's specific journey parameters. By analyzing destination weather conditions through real-time meteorological data, trip duration, travel purpose, and traveler demographics (including options for solo male/female travelers, couples, or families with children), the generator produces highly relevant packing recommendations. The tool's smart algorithms consider seasonal variations and specific climate zones—from tropical beaches to alpine mountains—ensuring travelers are prepared for the actual conditions they'll encounter rather than relying on generic advice. For business travelers, it includes essential work-related items, while adventure tourists receive suggestions for specialized gear. The generator features categorized sections covering clothing, toiletries, medications, electronics, travel documents, and destination-specific necessities, with each item thoughtfully selected based on practical travel experience. Users can further customize their lists by adding personal items or removing suggested ones, creating a truly bespoke planning resource. The list can be saved for future reference, printed for convenient packing, or shared with travel companions to coordinate group packing efforts. By considering factors like airline baggage restrictions, local cultural norms regarding attire, and destination-specific requirements (such as modest clothing for religious sites), this comprehensive tool helps travelers pack efficiently without overpacking or forgetting crucial items. Whether preparing for a weekend business trip, a family vacation, or an extended international journey, the Packing List Generator transforms the often overwhelming packing process into a streamlined, confidence-building part of travel preparation.",
+    distance: "The Distance Calculator is a sophisticated geospatial tool designed specifically for travel planning, offering precise measurements between global locations using advanced Google Maps integration. This comprehensive utility goes beyond simple point-to-point distance calculations by providing multi-faceted journey insights essential for effective trip planning. Users can input any global destination—from major cities to remote locations—and instantly receive accurate distance measurements displayed in both metric and imperial units for universal accessibility. What distinguishes this calculator is its ability to compute distances across different transportation modes, including driving, walking, cycling, and public transit, providing realistic travel time estimates that account for route-specific factors like traffic patterns, road conditions, elevation changes, and transportation infrastructure quality. For road trips, the tool offers detailed routing options with alternative paths, highlighting scenic routes, toll-free options, or fastest connections depending on user preference. The interactive map interface allows for visual route exploration, waypoint additions for multi-stop journeys, and real-time adjustments to optimize travel itineraries. Particularly valuable for international travelers, the calculator helps in managing transportation budgets by estimating fuel costs based on distance, vehicle efficiency, and local fuel prices, while also calculating carbon emissions for environmentally-conscious travelers seeking to offset their journey's environmental impact. Whether planning complex multi-city itineraries, organizing day trips from a vacation base, calculating business travel reimbursements, or simply satisfying curiosity about global distances, this powerful tool transforms abstract geographic information into practical travel intelligence, enabling more informed decision-making throughout the journey planning process."
   };
   
   const footerLinks = [
@@ -65,18 +61,7 @@ export const Layout = () => {
               <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight text-sidebar-foreground">
                 Travel Tools
               </h2>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    isActive={activeTool === "currency"} 
-                    tooltip="Currency Converter"
-                    onClick={() => setActiveTool("currency")}
-                  >
-                    <Currency className="mr-2 h-4 w-4" />
-                    <span>Currency Converter</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
+              <SidebarMenu>                
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     isActive={activeTool === "timezone"} 
@@ -118,7 +103,7 @@ export const Layout = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                className="w-full justify-start gap-2 text-tour-purple border-tour-purple hover:bg-tour-light dark:hover:bg-gray-800"
+                className="w-full justify-start gap-2 text-[#5e17eb] border-[#5e17eb] hover:bg-purple-50 dark:hover:bg-purple-950/20"
                 onClick={() => window.open("https://tourhelpline.com", "_blank")}
               >
                 <ExternalLink className="h-4 w-4" />
@@ -135,8 +120,7 @@ export const Layout = () => {
         <div className="flex-1 p-6 md:p-8 lg:p-10 overflow-auto">
           <main className="container mx-auto">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-tour-purple to-primary bg-clip-text text-transparent">
-                {activeTool === "currency" && "Currency Converter"}
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5e17eb] to-purple-500 bg-clip-text text-transparent">
                 {activeTool === "timezone" && "Time Zone Converter"}
                 {activeTool === "packing" && "Packing List Generator"}
                 {activeTool === "distance" && "Distance Calculator"}
@@ -147,7 +131,6 @@ export const Layout = () => {
             </div>
             
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-5 md:p-7">
-              {activeTool === "currency" && <CurrencyConverter />}
               {activeTool === "timezone" && <TimeZoneConverter />}
               {activeTool === "packing" && <PackingListGenerator />}
               {activeTool === "distance" && <DistanceCalculator />}
@@ -156,7 +139,6 @@ export const Layout = () => {
             <div className="mt-6 p-5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
               <h3 className="text-lg font-medium mb-2">About this tool</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                {activeTool === "currency" && toolDescriptions.currency}
                 {activeTool === "timezone" && toolDescriptions.timezone}
                 {activeTool === "packing" && toolDescriptions.packing}
                 {activeTool === "distance" && toolDescriptions.distance}
@@ -173,7 +155,7 @@ export const Layout = () => {
                     href={link.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-primary text-sm text-center md:text-left transition-colors"
+                    className="text-gray-500 hover:text-[#5e17eb] text-sm text-center md:text-left transition-colors"
                   >
                     {link.title}
                   </a>
