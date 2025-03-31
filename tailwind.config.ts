@@ -65,8 +65,10 @@ export default {
 				},
 				tour: {
 					'purple': '#5e17eb',
+					'light-purple': '#9b87f5',
+					'dark-purple': '#2e0b75',
 					'light': '#f5f0ff',
-					'dark': '#2e0b75'
+					'dark': '#1A1F2C'
 				}
 			},
 			borderRadius: {
@@ -90,17 +92,28 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { 
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': { 
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.5s ease-out'
 			},
 			backgroundImage: {
 				'travel-gradient': 'linear-gradient(to right, #5e17eb, #7c3aff)',
+				'travel-gradient-muted': 'linear-gradient(to right, rgba(94,23,235,0.1), rgba(124,58,255,0.1))',
 			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
-

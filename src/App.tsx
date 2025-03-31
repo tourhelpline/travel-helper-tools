@@ -17,14 +17,14 @@ const App = () => {
     // Update the page title
     document.title = "TourHelpline Tools";
     
-    // Update favicon
+    // Update favicon - using the same logo for favicon
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (link) {
-      link.href = "/lovable-uploads/65eee7a2-a5fa-4e65-9a89-07005ea121ad.png";
+      link.href = "/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png";
     } else {
       const newLink = document.createElement("link");
       newLink.rel = "icon";
-      newLink.href = "/lovable-uploads/65eee7a2-a5fa-4e65-9a89-07005ea121ad.png";
+      newLink.href = "/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png";
       document.head.appendChild(newLink);
     }
     
@@ -49,7 +49,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="top-right" theme="system" />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

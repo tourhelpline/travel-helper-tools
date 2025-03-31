@@ -16,7 +16,7 @@ import { ModeToggle } from './ModeToggle';
 import { TimeZoneConverter } from './tools/TimeZoneConverter';
 import { PackingListGenerator } from './tools/PackingListGenerator';
 import { DistanceCalculator } from './tools/DistanceCalculator';
-import { Clock, PackageCheck, Map, ExternalLink } from 'lucide-react';
+import { Clock, PackageCheck, Map, ExternalLink, Home } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from './ui/button';
 
@@ -24,11 +24,8 @@ export const Layout = () => {
   const [activeTool, setActiveTool] = useState<string>("timezone");
   const { theme } = useTheme();
   
-  const darkLogo = '/lovable-uploads/31a8e04d-2cc6-42d4-a914-82f3de9b11b8.png';
-  const lightLogo = '/lovable-uploads/7b9aaeb8-4854-4a23-9e54-eae208a20491.png';
-  
-  // Choose logo based on theme
-  const logoSrc = theme === 'dark' ? darkLogo : lightLogo;
+  // New logo path for light background
+  const logoPath = '/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png';
   
   const toolDescriptions = {
     timezone: "The Time Zone Converter is an essential travel tool designed to help travelers navigate the complexities of global time differences with precision and ease. This intuitive tool allows users to compare local times across multiple international destinations simultaneously, making it invaluable for planning international trips, scheduling calls with overseas contacts, or simply staying connected with friends and family abroad. With support for all major time zones around the world, from GMT to specific city-based time zones like Tokyo (JST) or New York (EST), the converter accounts for daylight saving time changes automatically, ensuring accuracy year-round. The user-friendly interface presents time differences in a clear, visual format, highlighting the hours ahead or behind between locations. For business travelers, this tool proves indispensable when coordinating meetings across multiple time zones, helping to avoid scheduling conflicts and confusion. Additionally, the tool provides information about business hours, helping travelers understand when offices, banks, and government services are likely to be open in their destination. Whether planning a multi-city itinerary, arranging international communications, or simply wanting to know the best time to call home while traveling, this comprehensive time zone calculator eliminates the guesswork from international time calculations, ensuring travelers stay punctual and connected regardless of their global location.",
@@ -48,10 +45,10 @@ export const Layout = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-b from-background to-purple-50/20 dark:from-background dark:to-purple-950/10">
-        <Sidebar>
+        <Sidebar variant="floating" className="border-r border-gray-200 dark:border-gray-800">
           <SidebarHeader className="flex items-center justify-between p-4">
             <div className="flex-1">
-              <img src={logoSrc} alt="TourHelpline Logo" className="h-10" />
+              <img src={logoPath} alt="TourHelpline Logo" className="h-10" />
             </div>
             <ModeToggle />
           </SidebarHeader>
@@ -61,12 +58,13 @@ export const Layout = () => {
               <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight text-sidebar-foreground">
                 Travel Tools
               </h2>
-              <SidebarMenu>                
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     isActive={activeTool === "timezone"} 
                     tooltip="Time Zone Converter"
                     onClick={() => setActiveTool("timezone")}
+                    className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
                   >
                     <Clock className="mr-2 h-4 w-4" />
                     <span>Time Zone Converter</span>
@@ -78,6 +76,7 @@ export const Layout = () => {
                     isActive={activeTool === "packing"} 
                     tooltip="Packing List Generator"
                     onClick={() => setActiveTool("packing")}
+                    className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
                   >
                     <PackageCheck className="mr-2 h-4 w-4" />
                     <span>Packing List Generator</span>
@@ -89,6 +88,7 @@ export const Layout = () => {
                     isActive={activeTool === "distance"} 
                     tooltip="Distance Calculator"
                     onClick={() => setActiveTool("distance")}
+                    className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
                   >
                     <Map className="mr-2 h-4 w-4" />
                     <span>Distance Calculator</span>
@@ -99,20 +99,21 @@ export const Layout = () => {
             
             <SidebarSeparator />
             
-            <div className="px-3 py-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="w-full justify-start gap-2 text-[#5e17eb] border-[#5e17eb] hover:bg-purple-50 dark:hover:bg-purple-950/20"
-                onClick={() => window.open("https://tourhelpline.com", "_blank")}
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span>Back to Main Website</span>
-              </Button>
+            <div className="px-3 py-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Back to Main Website"
+                  onClick={() => window.open("https://tourhelpline.com", "_blank")}
+                  className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  <span>Main Website</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </div>
           </SidebarContent>
           
-          <SidebarFooter className="px-3 py-2 text-xs text-muted-foreground">
+          <SidebarFooter className="px-3 py-4 text-xs text-muted-foreground">
             <p>© {new Date().getFullYear()} TourHelpline</p>
           </SidebarFooter>
         </Sidebar>
@@ -130,15 +131,15 @@ export const Layout = () => {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-5 md:p-7">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-5 md:p-7 backdrop-blur-sm dark:backdrop-blur-sm dark:bg-opacity-30">
               {activeTool === "timezone" && <TimeZoneConverter />}
               {activeTool === "packing" && <PackingListGenerator />}
               {activeTool === "distance" && <DistanceCalculator />}
             </div>
             
-            <div className="mt-6 p-5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-medium mb-2">About this tool</h3>
-              <p className="text-gray-600 dark:text-gray-400">
+            <div className="mt-6 p-5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 backdrop-blur-sm">
+              <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">About this tool</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 {activeTool === "timezone" && toolDescriptions.timezone}
                 {activeTool === "packing" && toolDescriptions.packing}
                 {activeTool === "distance" && toolDescriptions.distance}
