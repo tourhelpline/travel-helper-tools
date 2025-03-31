@@ -1,6 +1,14 @@
 
 declare namespace google {
   namespace maps {
+    class Map {
+      constructor(mapDiv: HTMLElement, opts?: MapOptions);
+      setCenter(latLng: LatLng | LatLngLiteral): void;
+      setZoom(zoom: number): void;
+      getCenter(): LatLng;
+      getZoom(): number;
+    }
+
     class Geocoder {
       geocode(
         request: {
@@ -24,10 +32,44 @@ declare namespace google {
       ): void;
     }
 
+    class DirectionsRenderer {
+      constructor(opts?: {
+        map?: Map;
+        suppressMarkers?: boolean;
+        polylineOptions?: PolylineOptions;
+      });
+      setDirections(directions: DirectionsResult): void;
+      setMap(map: Map | null): void;
+    }
+
     class LatLng {
       constructor(lat: number, lng: number);
       lat(): number;
       lng(): number;
+    }
+
+    interface PolylineOptions {
+      strokeColor?: string;
+      strokeWeight?: number;
+      strokeOpacity?: number;
+    }
+
+    interface MapOptions {
+      center: LatLng | LatLngLiteral;
+      zoom: number;
+      mapTypeId?: string;
+      disableDefaultUI?: boolean;
+      zoomControl?: boolean;
+      mapTypeControl?: boolean;
+      scaleControl?: boolean;
+      streetViewControl?: boolean;
+      rotateControl?: boolean;
+      fullscreenControl?: boolean;
+    }
+
+    interface LatLngLiteral {
+      lat: number;
+      lng: number;
     }
 
     class DistanceMatrixService {
@@ -103,6 +145,13 @@ declare namespace google {
       MAX_DIMENSIONS_EXCEEDED = "MAX_DIMENSIONS_EXCEEDED",
     }
 
+    const MapTypeId: {
+      ROADMAP: string;
+      SATELLITE: string;
+      HYBRID: string;
+      TERRAIN: string;
+    };
+
     interface DirectionsRequest {
       origin: string | { lat: number; lng: number } | LatLng;
       destination: string | { lat: number; lng: number } | LatLng;
@@ -112,12 +161,16 @@ declare namespace google {
 
     interface DirectionsResult {
       routes: {
-        legs: {
-          distance: { text: string; value: number };
-          duration: { text: string; value: number };
-          steps: any[];
-        }[];
+        legs: DirectionsLeg[];
       }[];
+    }
+
+    interface DirectionsLeg {
+      distance: { text: string; value: number };
+      duration: { text: string; value: number };
+      steps: any[];
+      start_address: string;
+      end_address: string;
     }
 
     interface DistanceMatrixRequest {

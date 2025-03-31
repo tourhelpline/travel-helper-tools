@@ -269,7 +269,9 @@ export const PackingListGenerator = () => {
             return;
           }
           
-          setDestinationSuggestions(predictions.map(p => p.description));
+          // Fix: Make sure predictions is not null before mapping
+          const suggestions = predictions ? predictions.map(p => p.description) : [];
+          setDestinationSuggestions(suggestions);
           setShowSuggestions(true);
         }
       );
