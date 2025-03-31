@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SidebarProvider,
   Sidebar,
@@ -16,15 +15,32 @@ import { ModeToggle } from './ModeToggle';
 import { TimeZoneConverter } from './tools/TimeZoneConverter';
 import { PackingListGenerator } from './tools/PackingListGenerator';
 import { DistanceCalculator } from './tools/DistanceCalculator';
+import { EmbedCodeButton } from './EmbedCodeButton';
 import { Clock, PackageCheck, Map, ExternalLink, Home } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { Button } from './ui/button';
 
-export const Layout = () => {
+interface LayoutProps {
+  embedMode?: boolean;
+  embedTool?: string | null;
+}
+
+export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => {
   const [activeTool, setActiveTool] = useState<string>("timezone");
   const { theme } = useTheme();
   
-  // New logo path for light background
+  useEffect(() => {
+    if (embedMode && embedTool) {
+      if (embedTool.toLowerCase().includes('time') || embedTool.toLowerCase().includes('zone')) {
+        setActiveTool("timezone");
+      } else if (embedTool.toLowerCase().includes('pack')) {
+        setActiveTool("packing");
+      } else if (embedTool.toLowerCase().includes('distance') || embedTool.toLowerCase().includes('map')) {
+        setActiveTool("distance");
+      }
+    }
+  }, [embedMode, embedTool]);
+  
   const logoPath = '/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png';
   
   const toolDescriptions = {
@@ -41,6 +57,21 @@ export const Layout = () => {
     { title: "Affiliate Disclosure", url: "https://tourhelpline.com/affiliate-disclosure/" },
     { title: "Terms & Conditions", url: "https://tourhelpline.com/terms-and-conditions/" },
   ];
+
+  if (embedMode) {
+    return (
+      <div className="w-full bg-gradient-to-b from-background to-purple-50/20 dark:from-background dark:to-purple-950/10 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-5 backdrop-blur-sm dark:backdrop-blur-sm dark:bg-opacity-30">
+          {activeTool === "timezone" && <TimeZoneConverter />}
+          {activeTool === "packing" && <PackingListGenerator />}
+          {activeTool === "distance" && <DistanceCalculator />}
+        </div>
+        <div className="mt-4 text-center text-xs text-gray-400">
+          <p>Powered by <a href="https://tourhelpline.com" target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:text-purple-600">TourHelpline</a></p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -126,8 +157,15 @@ export const Layout = () => {
                 {activeTool === "packing" && "Packing List Generator"}
                 {activeTool === "distance" && "Distance Calculator"}
               </h1>
-              <div className="md:hidden">
-                <SidebarTrigger />
+              <div className="flex items-center gap-3">
+                <EmbedCodeButton toolName={
+                  activeTool === "timezone" ? "Time Zone Converter" :
+                  activeTool === "packing" ? "Packing List Generator" :
+                  "Distance Calculator"
+                } />
+                <div className="md:hidden">
+                  <SidebarTrigger />
+                </div>
               </div>
             </div>
             
