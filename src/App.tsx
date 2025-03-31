@@ -60,11 +60,11 @@ const App = () => {
   }, []);
 
   return (
-    <ThemeProvider defaultTheme="system">
+    <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
-          <Sonner position="top-right" theme="system" />
+          <Sonner position="top-right" theme="light" />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index embedMode={isEmbedMode} embedTool={embedToolName} />} />

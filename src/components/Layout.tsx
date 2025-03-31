@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   SidebarProvider,
@@ -16,9 +17,8 @@ import { TimeZoneConverter } from './tools/TimeZoneConverter';
 import { PackingListGenerator } from './tools/PackingListGenerator';
 import { DistanceCalculator } from './tools/DistanceCalculator';
 import { EmbedCodeButton } from './EmbedCodeButton';
-import { Clock, PackageCheck, Map, ExternalLink, Home } from 'lucide-react';
+import { Clock, PackageCheck, Map, Home } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
-import { Button } from './ui/button';
 
 interface LayoutProps {
   embedMode?: boolean;
@@ -41,7 +41,10 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
     }
   }, [embedMode, embedTool]);
   
-  const logoPath = '/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png';
+  // Use different logo based on theme
+  const logoPath = theme === 'dark' 
+    ? '/lovable-uploads/6f0c6936-4ca6-45cc-ab77-4e1bf6d6944a.png' 
+    : '/lovable-uploads/b645517e-cd80-41dd-9e86-c09cc933a1c3.png';
   
   const toolDescriptions = {
     timezone: "The Time Zone Converter is an essential travel tool designed to help travelers navigate the complexities of global time differences with precision and ease. This intuitive tool allows users to compare local times across multiple international destinations simultaneously, making it invaluable for planning international trips, scheduling calls with overseas contacts, or simply staying connected with friends and family abroad. With support for all major time zones around the world, from GMT to specific city-based time zones like Tokyo (JST) or New York (EST), the converter accounts for daylight saving time changes automatically, ensuring accuracy year-round. The user-friendly interface presents time differences in a clear, visual format, highlighting the hours ahead or behind between locations. For business travelers, this tool proves indispensable when coordinating meetings across multiple time zones, helping to avoid scheduling conflicts and confusion. Additionally, the tool provides information about business hours, helping travelers understand when offices, banks, and government services are likely to be open in their destination. Whether planning a multi-city itinerary, arranging international communications, or simply wanting to know the best time to call home while traveling, this comprehensive time zone calculator eliminates the guesswork from international time calculations, ensuring travelers stay punctual and connected regardless of their global location.",
@@ -77,11 +80,11 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-b from-background to-purple-50/20 dark:from-background dark:to-purple-950/10">
         <Sidebar variant="floating" className="border-r border-gray-200 dark:border-gray-800">
-          <SidebarHeader className="flex items-center justify-between p-4">
-            <div className="flex-1">
-              <img src={logoPath} alt="TourHelpline Logo" className="h-10" />
+          <SidebarHeader className="flex flex-col sm:flex-row items-center gap-4 p-4">
+            <div className="flex-1 flex justify-center sm:justify-start">
+              <img src={logoPath} alt="TourHelpline Logo" className="h-12 sm:h-10" />
             </div>
-            <ModeToggle />
+            <ModeToggle className="hidden sm:flex" />
           </SidebarHeader>
           
           <SidebarContent>
@@ -142,6 +145,10 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </div>
+            
+            <div className="px-3 py-2 mt-2 flex justify-center sm:hidden">
+              <ModeToggle />
+            </div>
           </SidebarContent>
           
           <SidebarFooter className="px-3 py-4 text-xs text-muted-foreground">
@@ -149,10 +156,10 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
           </SidebarFooter>
         </Sidebar>
         
-        <div className="flex-1 p-6 md:p-8 lg:p-10 overflow-auto">
+        <div className="flex-1 p-4 md:p-6 lg:p-10 overflow-auto">
           <main className="container mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5e17eb] to-purple-500 bg-clip-text text-transparent">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#5e17eb] to-purple-500 bg-clip-text text-transparent">
                 {activeTool === "timezone" && "Time Zone Converter"}
                 {activeTool === "packing" && "Packing List Generator"}
                 {activeTool === "distance" && "Distance Calculator"}
@@ -169,15 +176,15 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-5 md:p-7 backdrop-blur-sm dark:backdrop-blur-sm dark:bg-opacity-30">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-800 p-4 md:p-5 lg:p-7 backdrop-blur-sm dark:backdrop-blur-sm dark:bg-opacity-30">
               {activeTool === "timezone" && <TimeZoneConverter />}
               {activeTool === "packing" && <PackingListGenerator />}
               {activeTool === "distance" && <DistanceCalculator />}
             </div>
             
-            <div className="mt-6 p-5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 backdrop-blur-sm">
-              <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">About this tool</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+            <div className="mt-4 md:mt-6 p-4 md:p-5 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 backdrop-blur-sm">
+              <h3 className="text-base md:text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">About this tool</h3>
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
                 {activeTool === "timezone" && toolDescriptions.timezone}
                 {activeTool === "packing" && toolDescriptions.packing}
                 {activeTool === "distance" && toolDescriptions.distance}
@@ -185,16 +192,16 @@ export const Layout = ({ embedMode = false, embedTool = null }: LayoutProps) => 
             </div>
           </main>
           
-          <footer className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800">
+          <footer className="mt-8 md:mt-12 pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-800">
             <div className="container mx-auto">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-4 md:mb-6">
                 {footerLinks.map((link) => (
                   <a 
                     key={link.url} 
                     href={link.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-[#5e17eb] text-sm text-center md:text-left transition-colors"
+                    className="text-gray-500 hover:text-[#5e17eb] text-xs md:text-sm text-center md:text-left transition-colors"
                   >
                     {link.title}
                   </a>

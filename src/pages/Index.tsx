@@ -7,7 +7,11 @@ interface IndexProps {
 }
 
 const Index = ({ embedMode = false, embedTool = null }: IndexProps) => {
-  return <Layout embedMode={embedMode} embedTool={embedTool} />;
+  return (
+    <div className="w-full h-full">
+      <Layout embedMode={embedMode} embedTool={embedTool} />
+    </div>
+  );
 };
 
 export default Index;
