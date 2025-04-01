@@ -2,13 +2,26 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) with Consent Mode -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LW13XP8RYD"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
+      
+      // Set default consent to 'denied' until user provides consent
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied'
+      });
+      
+      // Check for existing consent
+      const hasConsent = localStorage.getItem('cookieConsent');
+      if (hasConsent === 'accepted') {
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted'
+        });
+      }
+      
       gtag('config', 'G-LW13XP8RYD');
     </script>
     

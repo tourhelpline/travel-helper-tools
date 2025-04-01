@@ -8,6 +8,7 @@ import { ThemeProvider } from "./hooks/use-theme";
 import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import CookieConsent from "./components/CookieConsent";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -43,6 +44,12 @@ const App = () => {
       }
     }
     
+    // Initialize Google Analytics if consent already given
+    const hasConsent = localStorage.getItem('cookieConsent');
+    if (hasConsent === 'accepted') {
+      enableGoogleAnalytics();
+    }
+    
     // Fix the Google Maps API TypeScript issues by extending the Window interface
     // This makes TypeScript aware of the google object on the window
     const googleMapsScript = document.createElement("script");
@@ -59,6 +66,25 @@ const App = () => {
     };
   }, []);
 
+  const enableGoogleAnalytics = () => {
+    // Initialize Google Analytics
+    // The scripts are already in the HTML head, but we need to set the consent flag
+    if (window.gtag) {
+      window.gtag('consent', 'update', {
+        'analytics_storage': 'granted'
+      });
+    }
+  };
+
+  const disableGoogleAnalytics = () => {
+    // Disable Google Analytics
+    if (window.gtag) {
+      window.gtag('consent', 'update', {
+        'analytics_storage': 'denied'
+      });
+    }
+  };
+
   return (
     <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
@@ -72,6 +98,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <CookieConsent onAccept={enableGoogleAnalytics} onDecline={disableGoogleAnalytics} />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
