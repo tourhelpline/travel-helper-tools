@@ -1,5 +1,5 @@
 
-import Layout from "@/components/Layout";
+import LayoutWithPreferences from "@/components/LayoutWithPreferences";
 
 interface IndexProps {
   embedMode?: boolean;
@@ -9,7 +9,7 @@ interface IndexProps {
 const Index = ({ embedMode = false, embedTool = null }: IndexProps) => {
   return (
     <div className="w-full h-full">
-      <Layout embedMode={embedMode} embedTool={embedTool} />
+      <LayoutWithPreferences embedMode={embedMode} embedTool={embedTool} />
     </div>
   );
 };
