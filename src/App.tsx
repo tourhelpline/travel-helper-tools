@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./hooks/use-theme";
-import { UserPreferencesProvider } from "./hooks/use-preferences";
 import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -89,20 +88,18 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="light">
       <QueryClientProvider client={queryClient}>
-        <UserPreferencesProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner position="top-right" theme="light" />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index embedMode={isEmbedMode} embedTool={embedToolName} />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-            <CookieConsent onAccept={enableGoogleAnalytics} onDecline={disableGoogleAnalytics} />
-          </TooltipProvider>
-        </UserPreferencesProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner position="top-right" theme="light" />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index embedMode={isEmbedMode} embedTool={embedToolName} />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+          <CookieConsent onAccept={enableGoogleAnalytics} onDecline={disableGoogleAnalytics} />
+        </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
