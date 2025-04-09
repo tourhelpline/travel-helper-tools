@@ -7,11 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 interface LayoutWithPreferencesProps {
   embedMode?: boolean;
   embedTool?: string | null;
+  children?: React.ReactNode;
 }
 
-const LayoutWithPreferences: React.FC<LayoutWithPreferencesProps> = ({ embedMode, embedTool }) => {
-  // We'll pass the UserPreferencesToolbar to the Layout component through its children prop
-  // This assumes the Layout component renders its children
+const LayoutWithPreferences: React.FC<LayoutWithPreferencesProps> = ({ 
+  embedMode, 
+  embedTool,
+  children 
+}) => {
   return (
     <Layout embedMode={embedMode} embedTool={embedTool}>
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
@@ -21,6 +24,7 @@ const LayoutWithPreferences: React.FC<LayoutWithPreferencesProps> = ({ embedMode
           <AvatarFallback>TH</AvatarFallback>
         </Avatar>
       </div>
+      {children}
     </Layout>
   );
 };
